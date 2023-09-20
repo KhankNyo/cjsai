@@ -10,7 +10,7 @@
 typedef struct Level_t
 {
     bitarr_t inputs, outputs;
-    int input_count, output_count;
+    usize_t input_count, output_count;
     fltarr_t biases;
 
     fltarr_t *weights; /* each input connects to output_count amount of output */

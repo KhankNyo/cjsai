@@ -36,13 +36,13 @@ typedef struct bitarr_t
 #define bitarr_Init() ((bitarr_t){ 0 })
 #define bitarr_Deinit(p_bitarr) ((*(p_bitarr)) = bitarr_Init())
 
-inline unsigned bitarr_Get(bitarr_t bitarray, unsigned index)
+static inline unsigned bitarr_Get(bitarr_t bitarray, unsigned index)
 {
     CJSAI_ASSERT(index < BITARR_COUNT, "invalid input");
     return 1 & (bitarray.bits[index / BITS_IN_WORD] >> (index % BITS_IN_WORD));
 }
 
-inline unsigned bitarr_Set(bitarr_t *bitarray, unsigned index, unsigned value)
+static inline unsigned bitarr_Set(bitarr_t *bitarray, unsigned index, unsigned value)
 {
     CJSAI_ASSERT(index < BITARR_COUNT, "invalid input");
 

@@ -1,16 +1,16 @@
 
-#include "common.h"
-#include "utils.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "include/common.h"
+#include "include/utils.h"
 
 
 
 
 
-void *utils_alloc(size_t nbytes)
+void *mem_alloc(size_t nbytes)
 {
     void *ptr = malloc(nbytes);
     if (NULL == ptr)
@@ -23,7 +23,7 @@ void *utils_alloc(size_t nbytes)
 
 
 
-void *utils_realloc(void *ptr, size_t nbytes)
+void *mem_realloc(void *ptr, size_t nbytes)
 {
     if (0 == nbytes)
     {
@@ -41,7 +41,7 @@ void *utils_realloc(void *ptr, size_t nbytes)
 
 
 
-void utils_free(void *ptr)
+void mem_free(void *ptr)
 {
     free(ptr);
 }
