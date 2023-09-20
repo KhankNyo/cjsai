@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <limits.h>
 
 
 #ifdef _DEBUG
@@ -31,6 +32,12 @@
 #  define DBG_PRINT(...) (void)0
 
 #endif /* _DEBUG */
+
+
+
+typedef double flt_t;
+typedef size_t usize_t;
+#define BITS_IN_WORD (sizeof(uintptr_t)*CHAR_BIT)
 
 
 #endif /* CJSAI_COMMON_H */
