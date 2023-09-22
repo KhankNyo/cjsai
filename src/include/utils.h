@@ -5,8 +5,10 @@
 
 #include "common.h"
 
+
 #define UTILS_LERP(f64_start, f64_end, f64_percentage) \
     (double)((f64_start) + (double)((f64_end) - (f64_start))*(f64_percentage))
+#define UTILS_ZEROALL(type) (type){0}
 
 flt_t utils_randflt(flt_t lower_bound, flt_t upper_bound);
 
