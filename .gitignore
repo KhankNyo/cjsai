@@ -6,4 +6,5 @@ obj
 *.exe
 *.swp
 ~*
+.cache
 

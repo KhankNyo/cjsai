@@ -8,13 +8,11 @@ RAYLIB_SRC_PATH=$(mkfile_dir)/deps/raylib
 RAYLIB_RELEASE_PATH=$(mkfile_dir)/bin
 
 DEPS=$(RAYLIB_RELEASE_PATH)/libraylib.a
-LIBS=$(DEPS)
-
-
+LIBS=-lraylib -lopengl32 -lgdi32 -lwinmm
 
 CC=gcc
-CCF=-D_DEBUG -Og -g -Wall -Wpedantic -Wextra 
-LDF=
+CCF=-D_DEBUG -Og -g -std=c99 -I$(RAYLIB_SRC_PATH) -Wall -Wpedantic -Wextra 
+LDF=-L$(RAYLIB_RELEASE_PATH)
 
 
 EXEC_FMT=
