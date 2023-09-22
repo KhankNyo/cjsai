@@ -14,10 +14,10 @@ static void randomize(Level_t *level);
 Level_t Level_Init(unsigned input_count, unsigned output_count)
 {
 
-    CJSAI_ASSERT(input_count < BITARR_COUNT, 
+    CAI_ASSERT(input_count < BITARR_COUNT, 
         "a level's input of a level must be < %d\n", BITARR_COUNT
     );
-    CJSAI_ASSERT(output_count < BITARR_COUNT, 
+    CAI_ASSERT(output_count < BITARR_COUNT, 
         "a number of output of a level must be < %d\n", BITARR_COUNT
     );
 

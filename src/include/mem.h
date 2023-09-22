@@ -1,5 +1,5 @@
-#ifndef CJSAI_MEM_H
-#define CJSAI_MEM_H
+#ifndef CAI_MEM_H
+#define CAI_MEM_H
 
 
 #include "common.h"
@@ -21,5 +21,5 @@ void mem_free(void *ptr);
 #define MEM_FREE_ARRAY(ptr) mem_free(ptr)
 
 
-#endif /* CJSAI_MEM_H_*/
+#endif /* CAI_MEM_H_*/
 

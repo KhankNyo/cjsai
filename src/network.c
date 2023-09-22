@@ -15,7 +15,7 @@ NeuralNet_t NeuralNet_Init(usize_t *neurons, usize_t neuron_count)
         .count = neuron_count,
     };
     
-    CJSAI_ASSERT(neuron_count > 1, "There must be at least 2 neurons in a neural network");
+    CAI_ASSERT(neuron_count > 1, "There must be at least 2 neurons in a neural network");
     for (usize_t i = 0; i < neuron_count; i++)
     {
         nn.levels[i] = Level_Init(neurons[i], neurons[i + 1]);

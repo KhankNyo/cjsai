@@ -1,7 +1,16 @@
-#include <stdio.h>
+#include "include/cai.h"
 
 int main(void)
 {
-    printf("Hello, world\n");
+    CAI_Init();
+    while (CAI_IsRunning())
+    {
+        CAI_Run();
+    }
+    CAI_Deinit();
     return 0;
 }
+
+
+
+

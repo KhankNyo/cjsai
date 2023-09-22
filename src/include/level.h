@@ -1,5 +1,5 @@
-#ifndef CJSAI_LEVEL_H
-#define CJSAI_LEVEL_H
+#ifndef CAI_LEVEL_H
+#define CAI_LEVEL_H
 
 
 
@@ -27,5 +27,5 @@ bitarr_t Level_FeedForward(Level_t *level, bitarr_t given_input);
 
 
 
-#endif /* CJSAI_LEVEL_H */
+#endif /* CAI_LEVEL_H */
 

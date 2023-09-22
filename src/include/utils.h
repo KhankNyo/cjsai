@@ -1,5 +1,5 @@
-#ifndef CJSAI_UTILS_H
-#define CJSAI_UTILS_H
+#ifndef CAI_UTILS_H
+#define CAI_UTILS_H
 
 
 
@@ -38,13 +38,13 @@ typedef struct bitarr_t
 
 static inline unsigned bitarr_Get(bitarr_t bitarray, unsigned index)
 {
-    CJSAI_ASSERT(index < BITARR_COUNT, "invalid input");
+    CAI_ASSERT(index < BITARR_COUNT, "invalid input");
     return 1 & (bitarray.bits[index / BITS_IN_WORD] >> (index % BITS_IN_WORD));
 }
 
 static inline unsigned bitarr_Set(bitarr_t *bitarray, unsigned index, unsigned value)
 {
-    CJSAI_ASSERT(index < BITARR_COUNT, "invalid input");
+    CAI_ASSERT(index < BITARR_COUNT, "invalid input");
 
     value = value != 0; /* ensure that value is 1 or 0 */
     uintptr_t prev = bitarray->bits[index / BITS_IN_WORD]; /* get previous bit for return */
@@ -54,5 +54,5 @@ static inline unsigned bitarr_Set(bitarr_t *bitarray, unsigned index, unsigned v
 
 
 
-#endif /* CJSAI_UTILS_H */
+#endif /* CAI_UTILS_H */
 
