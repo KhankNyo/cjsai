@@ -1,0 +1,27 @@
+[
+    {
+        "directory": "D:/source/c/jsai",
+        "file": "src/level.c",
+        "command": "gcc -D_DEBUG -Og -g -ID:/source/c/jsai//deps/raylib -Wall -Wpedantic -Wextra  -c src/level.c -o obj/level.o"
+    },
+    {
+        "directory": "D:/source/c/jsai",
+        "file": "src/main.c",
+        "command": "gcc -D_DEBUG -Og -g -ID:/source/c/jsai//deps/raylib -Wall -Wpedantic -Wextra  -c src/main.c -o obj/main.o"
+    },
+    {
+        "directory": "D:/source/c/jsai",
+        "file": "src/mem.c",
+        "command": "gcc -D_DEBUG -Og -g -ID:/source/c/jsai//deps/raylib -Wall -Wpedantic -Wextra  -c src/mem.c -o obj/mem.o"
+    },
+    {
+        "directory": "D:/source/c/jsai",
+        "file": "src/network.c",
+        "command": "gcc -D_DEBUG -Og -g -ID:/source/c/jsai//deps/raylib -Wall -Wpedantic -Wextra  -c src/network.c -o obj/network.o"
+    },
+    {
+        "directory": "D:/source/c/jsai",
+        "file": "src/utils.c",
+        "command": "gcc -D_DEBUG -Og -g -ID:/source/c/jsai//deps/raylib -Wall -Wpedantic -Wextra  -c src/utils.c -o obj/utils.o"
+    }
+]
