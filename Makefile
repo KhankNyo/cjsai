@@ -5,14 +5,15 @@ DIRS=obj bin
 MAKE?=make
 
 RAYLIB_SRC_PATH=$(mkfile_dir)/deps/raylib
-RAYLIB_RELEASE_PATH=$(mkfile_dir)/bin
+RAYGUI_SRC_PATH=$(mkfile_dir)/deps/raygui
 
-DEPS=$(RAYLIB_RELEASE_PATH)/libraylib.a
-LIBS=-lraylib -lopengl32 -lgdi32 -lwinmm
+DEPS_PATH=$(mkfile_dir)/bin
+DEPS=$(DEPS_PATH)/libraylib.a $(DEPS_PATH)/raygui.o
+LIBS=$(DEPS) -lopengl32 -lgdi32 -lwinmm
 
 CC=gcc
-CCF=-D_DEBUG -Og -g -std=c99 -I$(RAYLIB_SRC_PATH) -Wall -Wpedantic -Wextra 
-LDF=-L$(RAYLIB_RELEASE_PATH)
+CCF=-D_DEBUG -Og -g -std=c99 -I$(RAYLIB_SRC_PATH) -I$(RAYGUI_SRC_PATH) -Wall -Wpedantic -Wextra 
+LDF=-L$(DEPS_PATH)
 
 
 EXEC_FMT=
@@ -37,11 +38,17 @@ $(DIRS):
 $(OUTPUT):$(DIRS) $(OBJ) $(DEPS)
 	$(CC) $(LDF) -o $@ $(OBJ) $(LIBS)
 
-$(RAYLIB_RELEASE_PATH)/libraylib.a:
+$(DEPS_PATH)/libraylib.a:
 	$(MAKE) \
 		RAYLIB_SRC_PATH=$(RAYLIB_SRC_PATH)\
-		RAYLIB_RELEASE_PATH=$(RAYLIB_RELEASE_PATH)\
+		RAYLIB_RELEASE_PATH=$(DEPS_PATH)\
 		-C $(RAYLIB_SRC_PATH)
+
+$(RAYGUI_SRC_PATH)/raygui.o:$(RAYGUI_SRC_PATH)/raygui.c
+	$(CC) $(CCF) -c $^ -o $@
+
+$(DEPS_PATH)/raygui.o:$(RAYGUI_SRC_PATH)/raygui.o
+	cp $^ $(DEPS_PATH)
 
 
 
