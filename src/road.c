@@ -30,7 +30,7 @@ Road_t Road_Init(int center, int width, int numlanes)
 
 void Road_Deinit(Road_t *road)
 {
-    *road = UTILS_ZEROALL(Road_t);
+    *road = ZEROALL(Road_t);
 }
 
 
@@ -45,6 +45,8 @@ void Road_Recenter(Road_t *road, int center)
 }
 
 
+
+
 void Road_Draw(const Road_t road, int y_start, int y_end, int divider_offset)
 {
     /* the surface */
@@ -55,12 +57,12 @@ void Road_Draw(const Road_t road, int y_start, int y_end, int divider_offset)
     );
 
     /* lane dash/divider */
-    y_start += divider_offset - road.dash_len;
+    int dash_start = y_start + divider_offset - road.dash_len;
     for (int x = road.left + road.lane_width; 
         x < road.right; 
         x += road.lane_width)
     {
-        for (int y = y_start; y < y_end; y += 2 * road.dash_len)
+        for (int y = dash_start; y < y_end; y += 2 * road.dash_len)
         {
             DrawRectangle(
                 x - road.dash_width / 2, y, 
@@ -69,6 +71,18 @@ void Road_Draw(const Road_t road, int y_start, int y_end, int divider_offset)
             );
         }
     }
+
+    /* road edge */
+    DrawRectangle(
+        road.left - road.dash_width * 2, y_start, 
+        road.dash_width, y_end, 
+        road.color
+    );
+    DrawRectangle(
+        road.right + road.dash_width, y_start, 
+        road.dash_width, y_end, 
+        road.color
+    );
 }
 
 

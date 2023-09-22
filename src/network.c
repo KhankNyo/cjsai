@@ -54,7 +54,7 @@ void NeuralNet_Mutate(NeuralNet_t *nn, double similarity)
     {
         for (usize_t j = 0; j < nn->levels[i].biases.count; j++)
         {
-            nn->levels[i].biases.at[j] = UTILS_LERP(
+            nn->levels[i].biases.at[j] = LERP(
                 nn->levels[i].biases.at[j],
                 utils_randflt(-1, 1),
                 similarity
@@ -66,7 +66,7 @@ void NeuralNet_Mutate(NeuralNet_t *nn, double similarity)
         {
             for (usize_t k = 0; k < nn->levels[i].output_count; k++)
             {
-                nn->levels[i].weights[j].at[k] = UTILS_LERP(
+                nn->levels[i].weights[j].at[k] = LERP(
                     nn->levels[i].weights[j].at[k],
                     utils_randflt(-1, 1),
                     similarity

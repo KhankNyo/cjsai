@@ -4,11 +4,15 @@
 
 
 #include "common.h"
+#include "float.h"
 
 
-#define UTILS_LERP(f64_start, f64_end, f64_percentage) \
+#define LERP(f64_start, f64_end, f64_percentage) \
     (double)((f64_start) + (double)((f64_end) - (f64_start))*(f64_percentage))
-#define UTILS_ZEROALL(type) (type){0}
+#define ZEROALL(type) (type){0}
+#define DEG_TORAD(deg) ((deg) * (3.14159 / 180.0f))
+#define STATIC_ARRSIZE(array) (sizeof(array) / sizeof(array[0]))
+
 
 flt_t utils_randflt(flt_t lower_bound, flt_t upper_bound);
 
@@ -53,6 +57,22 @@ static inline unsigned bitarr_Set(bitarr_t *bitarray, unsigned index, unsigned v
     bitarray->bits[index / BITS_IN_WORD] |= (value << (index % BITS_IN_WORD)); /* set the bit */
     return (prev >> (index % BITS_IN_WORD)) & 1;
 }
+
+static inline bool flt_inrange(double lower, double number, double upper)
+{
+    return lower < number && number < upper;
+}
+
+static inline bool flt_inrange_inclusive(double lower, double number, double upper)
+{
+    return lower <= number && number <= upper;
+}
+
+static inline bool flt_equ(double a, double b)
+{
+    return flt_inrange_inclusive(a - FLT_EPSILON, b, a + FLT_EPSILON);
+}
+
 
 
 

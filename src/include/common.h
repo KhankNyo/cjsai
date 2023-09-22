@@ -23,7 +23,7 @@
     }while(0)
 
 /* NOTE: args will not be evaluated in release build */
-#  define DBG_PRINT(...) fprintf(stderr, __VA_ARGS__)
+#  define CAI_DEBUG_PRINT(...) fprintf(stderr, __VA_ARGS__)
 
 
 #else

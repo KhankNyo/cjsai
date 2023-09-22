@@ -11,7 +11,7 @@
 
 flt_t utils_randflt(flt_t lower_bound, flt_t upper_bound)
 {
-    return UTILS_LERP(lower_bound, upper_bound, rand() / (double)RAND_MAX);
+    return LERP(lower_bound, upper_bound, rand() / (double)RAND_MAX);
 }
 
 
