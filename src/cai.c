@@ -29,7 +29,7 @@ static Car_t default_traffic(int lane, int rely);
 static void update_traffic(int win_w, int win_h, double traveled, double delta_time);
 static void draw_traffic(int win_w, int win_h);
 
-static double update_ypos(int win_h, double delta_time);
+static double update_cars(int win_w, int win_h, double delta_time);
 
 static int random_lane_index(void);
 static double random_lane(int win_w, int *outlane);
@@ -87,18 +87,14 @@ bool CAI_IsRunning(void)
 
 void CAI_Run(void)
 {
-    static float total_dist = 0; 
+    static flt_t total_dist = 0; 
     int win_h = GetRenderHeight();
     int win_w = GetRenderWidth();
     double delta_time = GetFrameTime();
 
     /* logic code */
     Road_Recenter(&s_road, win_w / 2);
-
-    Car_ApplyFriction(s_focused_car, delta_time);
-    Car_UpdateControls(s_focused_car, delta_time);
-    Car_UpdateXpos(s_focused_car, win_w, delta_time);
-    double traveled = update_ypos(win_h, delta_time);
+    double traveled = update_cars(win_w, win_h, delta_time);
     update_traffic(win_w, win_h, traveled, delta_time);
 
     total_dist += traveled;
@@ -185,14 +181,19 @@ static void draw_traffic(int win_w, int win_h)
 
 
 
-static double update_ypos(int win_h, double delta_time)
+
+
+static double update_cars(int win_w, int win_h, double delta_time)
 {
+    Car_ApplyFriction(s_focused_car, delta_time);
+    Car_UpdateControls(s_focused_car, delta_time);
+    Car_UpdateXpos(s_focused_car, win_w, delta_time);
+
     double rely = s_focused_car->rely;
     double dist = Car_UpdateYpos(s_focused_car, win_h, delta_time);
     s_focused_car->rely = rely;
     return dist;
 }
-
 
 
 

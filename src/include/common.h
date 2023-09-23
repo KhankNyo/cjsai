@@ -37,6 +37,7 @@
 
 typedef double flt_t;
 typedef size_t usize_t;
+typedef struct Car_t Car_t;
 #define BITS_IN_WORD (sizeof(uintptr_t)*CHAR_BIT)
 
 

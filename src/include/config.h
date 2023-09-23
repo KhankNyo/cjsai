@@ -2,6 +2,9 @@
 #define CAI_CONFIG_H
 
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include <raylib.h>
 
 
@@ -50,6 +53,11 @@
 #define DEF_CAR_RECT(arg_x, arg_y) \
     (Rectangle){.x = arg_x, .y = arg_y, \
         .width = DEF_CAR_WIDTH, .height = DEF_CAR_LEN}
+
+
+
+#define DEF_SENSOR_RAYLEN 150
+#define DEF_SENSOR_RAYSPREAD (M_PI / 2)
 
 
 #endif /* CAI_CONFIG_H */

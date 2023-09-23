@@ -6,11 +6,14 @@
 #include "common.h"
 #include "float.h"
 
+#include <math.h>
+#include <raylib.h>
+
 
 #define LERP(f64_start, f64_end, f64_percentage) \
     (double)((f64_start) + (double)((f64_end) - (f64_start))*(f64_percentage))
 #define ZEROALL(type) (type){0}
-#define DEG_TO_RAD(deg) ((deg) * (3.14159 / 180.0f))
+#define DEG_TO_RAD(deg) ((deg) * (M_PI / 180.0f))
 #define STATIC_ARRSIZE(array) (sizeof(array) / sizeof(array[0]))
 
 
@@ -57,6 +60,15 @@ static inline unsigned bitarr_Set(bitarr_t *bitarray, unsigned index, unsigned v
     bitarray->bits[index / BITS_IN_WORD] |= (value << (index % BITS_IN_WORD)); /* set the bit */
     return (prev >> (index % BITS_IN_WORD)) & 1;
 }
+
+
+
+typedef Vector2 Coord_t;
+
+
+
+
+
 
 static inline bool flt_inrange(double lower, double number, double upper)
 {

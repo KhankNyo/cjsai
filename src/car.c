@@ -52,11 +52,13 @@ double Car_ApplyFriction(Car_t *car, double delta_time)
 
 void Car_UpdateControls(Car_t *car, double delta_time)
 {
-    if (car->type == CAR_DUMMY)
-        return;
+    switch (car->type)
+    {
+    case CAR_DUMMY: return;
+    case CAR_HUMAN: Control_QueryInputs(&car->direction); break;
+    case CAR_AI: break;
+    }
 
-
-    Control_QueryInputs(&car->direction);
     /* turning */
     double angle = DEF_CAR_ANGLETURN * delta_time;
     if (flt_inrange_inclusive(100, car->speed, car->topspeed))

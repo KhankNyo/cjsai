@@ -2,10 +2,10 @@
 #define CAI_CAR_H
 
 
-#include <raylib.h>
-
 #include "control.h"
 #include "common.h"
+#include "network.h"
+#include "sensor.h"
 
 typedef enum ControlType_t 
 {
@@ -13,20 +13,24 @@ typedef enum ControlType_t
     CAR_HUMAN,
     CAR_AI,
 } ControlType_t;
-typedef struct Car_t
+
+struct Car_t
 {
     double relx, rely;
     double angle, friction;
-    float speed, accel, decel;
-    float topspeed, max_reverse_spd;
-    float width, len;
+    flt_t speed, accel, decel;
+    flt_t topspeed, max_reverse_spd;
+    flt_t width, len;
 
     ControlType_t type;
     Control_t direction;
+    Sensor_t sensor;
+    NeuralNet_t brain;
+
 
     Color color;
     bool damaged;
-} Car_t;
+};
 
 
 /* note: shape's x and y are between 0 and 1 */
