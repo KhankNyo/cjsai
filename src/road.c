@@ -13,7 +13,6 @@ Road_t Road_Init(int center, int width, int numlanes)
 {
     Road_t road = {
         .width = width, 
-        .lane_width = width / numlanes,
         .numlanes = numlanes,
         .color = DEF_ROAD_COLOR,
 
@@ -24,6 +23,7 @@ Road_t Road_Init(int center, int width, int numlanes)
         .dash_width = DEF_ROAD_DASHWIDTH,
         .dash_color = DEF_ROAD_DASHCOLOR,
     };
+    road.lane_width = (width - 4*road.dash_width) / numlanes;
     return road;
 }
 
@@ -56,12 +56,15 @@ void Road_Draw(const Road_t road, int y_start, int y_end, int divider_offset)
         road.color
     );
 
+    if (road.numlanes < 2)
+        return;
+
     /* lane dash/divider */
     int dash_start = y_start + divider_offset - road.dash_len;
-    for (int x = road.left + road.lane_width; 
-        x < road.right; 
-        x += road.lane_width)
+    int x = road.left + 2*road.dash_width;
+    for (int i = 0; i < road.numlanes - 1; i++)
     {
+        x += road.lane_width;
         for (int y = dash_start; y < y_end; y += 2 * road.dash_len)
         {
             DrawRectangle(
@@ -74,14 +77,14 @@ void Road_Draw(const Road_t road, int y_start, int y_end, int divider_offset)
 
     /* road edge */
     DrawRectangle(
-        road.left - road.dash_width * 2, y_start, 
+        road.left + road.dash_width, y_start, 
         road.dash_width, y_end, 
-        road.color
+        road.dash_color
     );
     DrawRectangle(
-        road.right + road.dash_width, y_start, 
+        road.right - 2*road.dash_width, y_start, 
         road.dash_width, y_end, 
-        road.color
+        road.dash_color
     );
 }
 
@@ -93,7 +96,7 @@ int Road_CenterOfLane(const Road_t road, int lane)
     );
 
     const int center = road.lane_width / 2;
-    return road.left + lane * road.lane_width + center;
+    return road.left + 2*road.dash_width + lane * road.lane_width + center;
 }
 
 

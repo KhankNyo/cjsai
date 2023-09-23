@@ -25,16 +25,16 @@ static Car_t s_car = { 0 };
 static Car_t *s_focused_car = NULL;
 
 
-static Car_t default_traffic(int lane, int y);
+static Car_t default_traffic(int lane, int rely);
 static void update_traffic(int win_w, int win_h, double traveled, double delta_time);
 static void draw_traffic(int win_w, int win_h);
 
-static double update_car(int win_w, int win_h, double delta_time);
-static void update_car_direction(double delta_time);
-/* apply friction to the focused car */
-static double apply_friction(double delta_time);
+static double update_ypos(int win_h, double delta_time);
+
+static int random_lane_index(void);
 static double random_lane(int win_w, int *outlane);
 static void draw_info(void);
+static void value_box(const char *title, int x, int y, int value);
 
 
 
@@ -58,10 +58,13 @@ void CAI_Init(void)
     );
 
 
-    s_traffic[0] = default_traffic(0, -DEF_CAR_WIDTH);
-    s_traffic[1] = default_traffic(1, -DEF_CAR_WIDTH);
-    s_trafficlanes[0] = 0;
-    s_trafficlanes[1] = 1;
+    CAI_ASSERT(s_road.numlanes > 1, "road must have more than 1 lane\n");
+    for (int i = 0; i < s_traffic_count; i++)
+    {
+        s_trafficlanes[i] = random_lane_index();
+        double rely = TRAFFIC_DESPAWN - (int)(i / (s_road.numlanes - 1)) * TRAFFIC_NEXT;
+        s_traffic[i] = default_traffic(s_trafficlanes[i], rely);
+    }
 
     s_car = Car_Init(
         DEF_CAR_RECT(0.5, 0.8), 
@@ -91,7 +94,11 @@ void CAI_Run(void)
 
     /* logic code */
     Road_Recenter(&s_road, win_w / 2);
-    double traveled = update_car(win_w, win_h, delta_time);
+
+    Car_ApplyFriction(s_focused_car, delta_time);
+    Car_UpdateControls(s_focused_car, delta_time);
+    Car_UpdateXpos(s_focused_car, win_w, delta_time);
+    double traveled = update_ypos(win_h, delta_time);
     update_traffic(win_w, win_h, traveled, delta_time);
 
     total_dist += traveled;
@@ -128,12 +135,13 @@ void CAI_Deinit(void)
 
 
 
-static Car_t default_traffic(int lane, int y)
+static Car_t default_traffic(int lane, int rely)
 {
     Car_t car = Car_Init(
         DEF_CAR_RECT(
             Road_CenterOfLane(s_road, lane) / (double)DEF_WIN_WIDTH, 
-            (double)y / DEF_WIN_HEIGHT), 
+            rely
+        ), 
         DEF_TRAFFIC_COLOR, 
         CAR_DUMMY
     );
@@ -149,16 +157,14 @@ static void update_traffic(int win_w, int win_h, double traveled, double delta_t
         s_traffic[i].rely += (y + traveled) / win_h;
         s_traffic[i].relx = (double)Road_CenterOfLane(s_road, s_trafficlanes[i]) / win_w;
 
-        CAI_DEBUG_PRINT("traffic %d: rely: %.02f\n", i, s_traffic[i].rely);
-
-        if (s_traffic[i].rely < -.2)
+        if (s_traffic[i].rely < TRAFFIC_DESPAWN)
         {
-            s_traffic[i].rely = 1.1;
+            s_traffic[i].rely = TRAFFIC_SPAWN;
             s_traffic[i].relx = random_lane(win_w, &s_trafficlanes[i]);
         }
-        else if (s_traffic[i].rely > 1.5)
+        else if (s_traffic[i].rely > TRAFFIC_SPAWN)
         {
-            s_traffic[i].rely = -.1;
+            s_traffic[i].rely = TRAFFIC_DESPAWN;
             s_traffic[i].relx = random_lane(win_w, &s_trafficlanes[i]);
         }
     }
@@ -175,93 +181,73 @@ static void draw_traffic(int win_w, int win_h)
 
 
 
-static double update_car(int win_w, int win_h, double delta_time)
+
+
+
+
+static double update_ypos(int win_h, double delta_time)
 {
-    apply_friction(delta_time);
-
-
-    if (!s_focused_car->damaged)
-    {
-        update_car_direction(delta_time);
-    }
-
-    double traveled = s_focused_car->speed * delta_time * DISTANCE_FACTOR;
-    s_focused_car->relx += sin(DEG_TORAD(s_focused_car->angle)) * traveled / win_w;
-
-
-    CAI_DEBUG_PRINT("km/h: %.02f, mph: %.02f, angle: %.02f, ",
-        s_focused_car->speed, 
-        s_focused_car->speed / 1.6f,
-        s_focused_car->angle
-    );
-    CAI_DEBUG_PRINT("w: %d, h: %d, carx: %.2f, cary: %.2f\n",
-        win_w, win_h, 
-        s_focused_car->relx * win_w, s_focused_car->rely * win_h
-    );
-
-    /* returns distance traveled in the y direction */
-    return cos(DEG_TORAD(s_focused_car->angle)) * traveled;
+    double rely = s_focused_car->rely;
+    double dist = Car_UpdateYpos(s_focused_car, win_h, delta_time);
+    s_focused_car->rely = rely;
+    return dist;
 }
 
 
 
-static double apply_friction(double delta_time)
+
+
+static int random_lane_index(void)
 {
-    return s_focused_car->speed -= s_focused_car->speed * DEF_CAR_FRICTION * delta_time;
+    return utils_randflt(0, s_road.numlanes);
 }
-
-
-static void update_car_direction(double delta_time)
-{    
-    /* turning */
-    double angle = DEF_CAR_ANGLETURN;
-    if (flt_inrange(-DEF_CAR_REVERSESPD, s_focused_car->speed, 20))
-        angle *= delta_time;
-    else 
-        angle /= s_focused_car->speed / 2;
-    if (IsKeyDown(KEY_A))
-    {
-        s_focused_car->angle -= angle;
-        apply_friction(delta_time);
-    }
-    else if (IsKeyDown(KEY_D))
-    {
-        s_focused_car->angle += angle;
-        apply_friction(delta_time);
-    }
-
-
-    /* forward and reverse */
-    if (IsKeyDown(KEY_W))
-    {
-        s_focused_car->speed += DEF_CAR_ACCEL * delta_time;
-    }
-    if (s_focused_car->speed > -DEF_CAR_REVERSESPD)
-    {
-        if (IsKeyDown(KEY_S))
-            s_focused_car->speed -= DEF_CAR_DECEL * delta_time;
-    }
-}
-
-
 
 
 static double random_lane(int win_w, int *outlane)
 {
-    *outlane = utils_randflt(0, s_road.numlanes);
+    *outlane = random_lane_index();
     return (double)Road_CenterOfLane(s_road, *outlane) / win_w;
+}
+
+
+
+static void value_box(const char *title, int x, int y, int val)
+{
+    GuiValueBox(
+        (Rectangle){
+            .x = x, .y = y, 
+            .width = DEF_VALUEBOX_WIDTH, 
+            .height = DEF_VALUEBOX_HEIGHT
+        }, 
+        title, &val, 0, val, false
+    );
 }
 
 
 static void draw_info(void)
 {
-    int fps = GetFPS();
-    GuiValueBox((Rectangle){.x = 50, .y = 50, .width = 40, .height = 20}, 
-        "fps:", &fps, 0, fps, false
-    );
+    int x = 60, y = 50;
+    value_box("fps:", x, y, GetFPS());
+    y += DEF_VALUEBOX_HEIGHT;
+    value_box("mph:", x, y, s_focused_car->speed / 1.6);
 
-    int spd = s_focused_car->speed / 1.6;
-    GuiValueBox((Rectangle){.x = 50, .y = 70, .width = 40, .height = 20},
-        "mph:", &spd, 0, spd, false
-    );
+#ifdef _DEBUG
+    y += DEF_VALUEBOX_HEIGHT;
+    value_box("angle:", x, y, s_focused_car->angle);
+
+    y += DEF_VALUEBOX_HEIGHT;
+    value_box("xpos:", x, y, s_focused_car->relx * GetRenderWidth());
+
+    y += DEF_VALUEBOX_HEIGHT;
+    value_box("ypos:", x, y, s_focused_car->rely * GetRenderHeight());
+
+
+    for (int i = 0; i < s_traffic_count; i++)
+    {
+        static char tmp[32] = { 0 };
+        y += DEF_VALUEBOX_HEIGHT;
+        snprintf(tmp, sizeof tmp, "traffic %d: y:", i);
+        value_box(tmp, x*2, y, s_traffic[i].rely * GetRenderHeight());
+    }
+#endif /* _DEBUG */
 }
