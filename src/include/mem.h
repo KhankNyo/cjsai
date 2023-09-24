@@ -3,11 +3,19 @@
 
 
 #include "common.h"
+#ifdef _WIN32
+#  include <malloc.h>
+#else /* literally everything else but windows */
+#  include <alloca.h>
+#endif /* _WIN32 */
 
 
 
 #define MEM_GROW_CAPACITY(oldcap) \
     ((oldcap) < 8 ? 8 : (oldcap)*2)
+
+#define MEM_ALLOCA_ARRAY(nelem, elem_size) alloca((nelem)*(elem_size))
+
 
 void *mem_alloc(usize_t nbytes);
 #define MEM_ALLOC_ARRAY(nelem, elem_size)\

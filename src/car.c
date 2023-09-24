@@ -9,9 +9,9 @@
 #include "include/car.h"
 
 
-Car_t Car_Init(Rectangle shape, Color color, ControlType_t type)
+Car_t Car_Init(Car_t *car, Rectangle shape, Color color, ControlType_t type)
 {
-    Car_t car = {
+    *car = (Car_t){
         .relx = shape.x,
         .rely = shape.y,
         .width = shape.width, 
@@ -24,19 +24,22 @@ Car_t Car_Init(Rectangle shape, Color color, ControlType_t type)
         .type = type,
         .color = color,
         .direction = Control_Init(),
+        .sensor = Sensor_Init(car, DEF_SENSOR_RAYCOUNT),
 
+        .poly_count = DEF_CAR_POLYCOUNT,
         .friction = DEF_CAR_FRICTION,
         .topspeed = DEF_CAR_TOPSPD,
         .max_reverse_spd = -DEF_CAR_REVERSESPD,
         .accel = DEF_CAR_ACCEL,
         .decel = DEF_CAR_DECEL,
     };
-    return car;
+    return *car;
 }
 
 void Car_Deinit(Car_t *car)
 {
     Control_Deinit(&car->direction);
+    Sensor_Deinit(&car->sensor);
     *car = ZEROALL(Car_t);
 }
 
@@ -96,6 +99,13 @@ void Car_UpdateControls(Car_t *car, double delta_time)
 
 
 
+void Car_UpdateSensor(Car_t *car, const Road_t road, const Car_t *traffic, int traffic_count)
+{
+    Sensor_Update(&car->sensor, road, traffic, traffic_count);
+}
+
+
+
 
 double Car_UpdateXpos(Car_t *car, int screen_w, double delta_time)
 {
@@ -115,17 +125,38 @@ double Car_UpdateYpos(Car_t *car, int screen_h, double delta_time)
 }
 
 
-
-
-void Car_Draw(const Car_t car, int win_w, int win_h)
+void Car_GetPolygons(const Car_t car, Line_t *out_polygons)
 {
-    const double x = win_w * car.relx;
-    const double y = win_h * car.rely;
+    CAI_ASSERT(car.poly_count == DEF_CAR_POLYCOUNT, 
+        "can't handle %d polygons\n", car.poly_count
+    );
+    const flt_t x = car.relx, 
+          y = car.rely, 
+          w = car.width, 
+          l = car.len;
+    out_polygons[0] = Line_From(x,        y,      x,      y + l);
+    out_polygons[1] = Line_From(x + w,    y,      x + w,  y + l);
+    out_polygons[2] = Line_From(x,        y,      x + w,  y);
+    out_polygons[3] = Line_From(x,        y + l,  x,      y + l);
+}
+
+
+
+
+void Car_Draw(const Car_t car, int scale, bool draw_sensors)
+{
+    const double x = scale * car.relx;
+    const double y = scale * car.rely;
+    const double w = scale * car.width;
+    const double l = scale * car.len;
 
     rlPushMatrix();
     rlTranslatef(x, y, 0);
     rlRotatef(car.angle, 0, 0, 1);
-        DrawRectangle(-car.width/2, -car.len/2, car.width, car.len, car.color);
+        DrawRectangle(-w/2, -l/2, w, l, car.color);
     rlPopMatrix();
+
+    if (draw_sensors)
+        Sensor_Draw(car.sensor, scale);
 }
 

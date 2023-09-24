@@ -25,9 +25,9 @@ static Car_t s_car = { 0 };
 static Car_t *s_focused_car = NULL;
 
 
-static Car_t default_traffic(int lane, int rely);
-static void update_traffic(int win_w, int win_h, double traveled, double delta_time);
-static void draw_traffic(int win_w, int win_h);
+static Car_t default_traffic(Car_t *car, int lane, int rely);
+static void update_traffic(int scale, double traveled, double delta_time);
+static void draw_traffic(int scale);
 
 static double update_cars(int win_w, int win_h, double delta_time);
 
@@ -63,11 +63,12 @@ void CAI_Init(void)
     {
         s_trafficlanes[i] = random_lane_index();
         double rely = TRAFFIC_DESPAWN - (int)(i / (s_road.numlanes - 1)) * TRAFFIC_NEXT;
-        s_traffic[i] = default_traffic(s_trafficlanes[i], rely);
+        s_traffic[i] = default_traffic(&s_traffic[i], s_trafficlanes[i], rely);
     }
 
     s_car = Car_Init(
-        DEF_CAR_RECT(0.5, 0.8), 
+        &s_car,
+        DEF_CAR_RECT(0.5, 0.8 * WH_FACTOR), 
         DEF_CAR_COLOR,
         CAR_HUMAN
     );
@@ -95,7 +96,7 @@ void CAI_Run(void)
     /* logic code */
     Road_Recenter(&s_road, win_w / 2);
     double traveled = update_cars(win_w, win_h, delta_time);
-    update_traffic(win_w, win_h, traveled, delta_time);
+    update_traffic(win_w, traveled, delta_time);
 
     total_dist += traveled;
     if (total_dist >= s_road.dash_len*2)
@@ -107,8 +108,8 @@ void CAI_Run(void)
     BeginDrawing();
         ClearBackground(RAYWHITE);
         Road_Draw(s_road, 0, win_h, total_dist);
-        Car_Draw(s_car, win_w, win_h);
-        draw_traffic(win_w, win_h);
+        Car_Draw(s_car, win_w, true);
+        draw_traffic(win_w);
         draw_info();
     EndDrawing();
 }
@@ -131,9 +132,10 @@ void CAI_Deinit(void)
 
 
 
-static Car_t default_traffic(int lane, int rely)
+static Car_t default_traffic(Car_t *traffic, int lane, int rely)
 {
-    Car_t car = Car_Init(
+    *traffic = Car_Init(
+        traffic,
         DEF_CAR_RECT(
             Road_CenterOfLane(s_road, lane) / (double)DEF_WIN_WIDTH, 
             rely
@@ -141,37 +143,37 @@ static Car_t default_traffic(int lane, int rely)
         DEF_TRAFFIC_COLOR, 
         CAR_DUMMY
     );
-    car.speed = DEF_TRAFFIC_SPD;
-    return car;
+    traffic->speed = DEF_TRAFFIC_SPD;
+    return *traffic;
 }
 
-static void update_traffic(int win_w, int win_h, double traveled, double delta_time)
+static void update_traffic(int scale, double traveled, double delta_time)
 {
     for (int i = 0; i < s_traffic_count; i++)
     {
         double y = -s_traffic[i].speed * delta_time * DISTANCE_FACTOR;
-        s_traffic[i].rely += (y + traveled) / win_h;
-        s_traffic[i].relx = (double)Road_CenterOfLane(s_road, s_trafficlanes[i]) / win_w;
+        s_traffic[i].rely += (y + traveled) / scale;
+        s_traffic[i].relx = (double)Road_CenterOfLane(s_road, s_trafficlanes[i]) / scale;
 
         if (s_traffic[i].rely < TRAFFIC_DESPAWN)
         {
             s_traffic[i].rely = TRAFFIC_SPAWN;
-            s_traffic[i].relx = random_lane(win_w, &s_trafficlanes[i]);
+            s_traffic[i].relx = random_lane(scale, &s_trafficlanes[i]);
         }
         else if (s_traffic[i].rely > TRAFFIC_SPAWN)
         {
             s_traffic[i].rely = TRAFFIC_DESPAWN;
-            s_traffic[i].relx = random_lane(win_w, &s_trafficlanes[i]);
+            s_traffic[i].relx = random_lane(scale, &s_trafficlanes[i]);
         }
     }
 }
 
 
-static void draw_traffic(int win_w, int win_h)
+static void draw_traffic(int scale)
 {
     for (int i = 0; i < s_traffic_count; i++)
     {
-        Car_Draw(s_traffic[i], win_w, win_h);
+        Car_Draw(s_traffic[i], scale, false);
     }
 }
 
@@ -188,6 +190,7 @@ static double update_cars(int win_w, int win_h, double delta_time)
     Car_ApplyFriction(s_focused_car, delta_time);
     Car_UpdateControls(s_focused_car, delta_time);
     Car_UpdateXpos(s_focused_car, win_w, delta_time);
+    Car_UpdateSensor(s_focused_car, s_road, s_traffic, s_traffic_count);
 
     double rely = s_focused_car->rely;
     double dist = Car_UpdateYpos(s_focused_car, win_h, delta_time);
@@ -241,6 +244,9 @@ static void draw_info(void)
 
     y += DEF_VALUEBOX_HEIGHT;
     value_box("ypos:", x, y, s_focused_car->rely * GetRenderHeight());
+
+    y += DEF_VALUEBOX_HEIGHT;
+    value_box("w : ", x, y, s_focused_car->width);
 
 
     for (int i = 0; i < s_traffic_count; i++)

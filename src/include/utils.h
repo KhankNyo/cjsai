@@ -2,22 +2,39 @@
 #define CAI_UTILS_H
 
 
+#include <math.h>
+#include <raylib.h>
 
 #include "common.h"
 #include "float.h"
 
-#include <math.h>
-#include <raylib.h>
 
 
 #define LERP(f64_start, f64_end, f64_percentage) \
     (double)((f64_start) + (double)((f64_end) - (f64_start))*(f64_percentage))
 #define ZEROALL(type) (type){0}
-#define DEG_TO_RAD(deg) ((deg) * (M_PI / 180.0f))
+#define DEG_TO_RAD(deg) ((deg) * (PI / 180.0f))
 #define STATIC_ARRSIZE(array) (sizeof(array) / sizeof(array[0]))
 
 
+
 flt_t utils_randflt(flt_t lower_bound, flt_t upper_bound);
+
+
+typedef struct Line_t
+{
+    Vector2 start, end;
+} Line_t;
+typedef struct Reading_t
+{
+    Vector2 at;
+    flt_t dist;
+} Reading_t;
+
+/* returns NULL if a & b does not intersect, else return the pointer given */
+Reading_t *Line_Intersect(Reading_t *at, const Line_t a, const Line_t b);
+Line_t Line_From(flt_t x, flt_t y, flt_t offset_w, flt_t offset_h);
+Line_t Line_Scale(Line_t line, double scale);
 
 
 typedef struct fltarr_t
@@ -62,8 +79,6 @@ static inline unsigned bitarr_Set(bitarr_t *bitarray, unsigned index, unsigned v
 }
 
 
-
-typedef Vector2 Coord_t;
 
 
 

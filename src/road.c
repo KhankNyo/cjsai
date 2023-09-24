@@ -46,6 +46,18 @@ void Road_Recenter(Road_t *road, int center)
 
 
 
+Line_t Road_RelativeRightBorder(const Road_t road, int win_w)
+{
+    return Line_From((double)road.right / win_w, 0, 0, 1);
+}
+
+
+Line_t Road_RelativeLeftBorder(const Road_t road, int win_w)
+{
+    return Line_From((double)road.left / win_w, 0, 0, 1);
+}
+
+
 
 void Road_Draw(const Road_t road, int y_start, int y_end, int divider_offset)
 {

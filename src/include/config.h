@@ -2,9 +2,7 @@
 #define CAI_CONFIG_H
 
 
-#define _USE_MATH_DEFINES
 #include <math.h>
-
 #include <raylib.h>
 
 
@@ -29,12 +27,13 @@
 
 
 #define DISTANCE_FACTOR 10
+#define WH_FACTOR ((double)DEF_WIN_HEIGHT / DEF_WIN_WIDTH)
 
 #define DEF_TRAFFIC_COUNT 4
 #define DEF_TRAFFIC_SPD (30*1.6f) /* 30 mph */
 #define DEF_TRAFFIC_COLOR RED
-#define TRAFFIC_SPAWN 2.f
-#define TRAFFIC_DESPAWN -2.f
+#define TRAFFIC_SPAWN (2.f * WH_FACTOR)
+#define TRAFFIC_DESPAWN (-2.f * WH_FACTOR)
 #define TRAFFIC_NEXT -(((double)DEF_ROAD_LANES - 1) / DEF_TRAFFIC_COUNT)
 
 
@@ -47,17 +46,21 @@
 
 #define DEF_CAR_COLOR BLUE
 
-#define DEF_CAR_WIDTH (DEF_ROAD_LANEWIDTH * 5/8)
-#define DEF_CAR_LEN (DEF_CAR_WIDTH*7/4)
+#define DEF_CAR_WIDTH ((double)DEF_ROAD_LANEWIDTH * 5/8 / DEF_WIN_WIDTH)
+#define DEF_CAR_LEN (DEF_CAR_WIDTH * 7/4)
 
 #define DEF_CAR_RECT(arg_x, arg_y) \
     (Rectangle){.x = arg_x, .y = arg_y, \
         .width = DEF_CAR_WIDTH, .height = DEF_CAR_LEN}
+#define DEF_CAR_POLYCOUNT 4
 
 
 
-#define DEF_SENSOR_RAYLEN 150
-#define DEF_SENSOR_RAYSPREAD (M_PI / 2)
+#define DEF_SENSOR_RAYLEN (150.0f/DEF_WIN_HEIGHT)
+#define DEF_SENSOR_RAYSPREAD (90)
+#define DEF_SENSOR_COLORTOUCHED BLACK
+#define DEF_SENSOR_COLORNORMAL YELLOW
+#define DEF_SENSOR_RAYCOUNT 6
 
 
 #endif /* CAI_CONFIG_H */

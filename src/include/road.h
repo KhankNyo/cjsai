@@ -5,6 +5,11 @@
 
 #include <raylib.h>
 
+#include "common.h"
+#include "utils.h"
+
+
+
 typedef struct Road_t
 {
     int left, right;
@@ -19,6 +24,9 @@ void Road_Deinit(Road_t *road);
 
 
 void Road_Recenter(Road_t *road, int center);
+
+Line_t Road_RelativeRightBorder(const Road_t road, int win_w);
+Line_t Road_RelativeLeftBorder(const Road_t road, int win_h);
 
 /* draws whole road */
 void Road_Draw(const Road_t, int y_start, int y_end, int divider_offset);
