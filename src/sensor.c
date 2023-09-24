@@ -62,11 +62,20 @@ void Sensor_Draw(const Sensor_t sensor, int scale)
     for (int i = 0; i < sensor.ray_count; i++)
     {
         Line_t ray = Line_Scale(sensor.rays[i], scale);
-        DrawLineV(
-            ray.start, 
-            ray.end, 
-            sensor.color.normal
-        );
+
+        if (0 == sensor.readings[i].dist)
+        {
+            DrawLineV(ray.start, ray.end, sensor.color.normal);
+        }
+        else
+        {
+            Vector2 touched = {
+                .x = sensor.readings[i].at.x * scale, 
+                .y = sensor.readings[i].at.y * scale
+            };
+            DrawLineV(ray.start, touched, sensor.color.normal);
+            DrawLineV(touched, ray.end, sensor.color.touched);
+        }
     }
 }
 

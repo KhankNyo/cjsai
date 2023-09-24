@@ -108,8 +108,8 @@ void CAI_Run(void)
     BeginDrawing();
         ClearBackground(RAYWHITE);
         Road_Draw(s_road, 0, win_h, total_dist);
-        Car_Draw(s_car, win_w, true);
         draw_traffic(win_w);
+        Car_Draw(s_car, win_w, true);
         draw_info();
     EndDrawing();
 }
