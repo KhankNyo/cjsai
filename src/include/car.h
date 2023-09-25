@@ -54,6 +54,10 @@ void Car_UpdateSensor(Car_t *car, const Road_t road, const Car_t *traffic, int t
 /* out_polygons must be able to contain car.poly_count elems */
 void Car_GetPolygons(const Car_t car, Line_t *out_polygons);
 
+
+void Car_GetScaledPolygons(const Car_t car, Line_t *out_polygons, double scale);
+
+
 void Car_Draw(const Car_t, int scale, bool draw_sensors);
 
 

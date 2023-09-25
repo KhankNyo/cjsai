@@ -35,6 +35,7 @@ typedef struct Reading_t
 Reading_t *Line_Intersect(Reading_t *at, const Line_t a, const Line_t b);
 Line_t Line_From(flt_t x, flt_t y, flt_t offset_w, flt_t offset_h);
 Line_t Line_Scale(Line_t line, double scale);
+Line_t Line_Rotate(Line_t line, Vector2 origin, double rad);
 
 
 typedef struct fltarr_t

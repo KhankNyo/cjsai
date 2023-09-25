@@ -7,6 +7,7 @@
 #include "include/utils.h"
 #include "include/config.h"
 #include "include/car.h"
+#include "include/mem.h"
 
 
 Car_t Car_Init(Car_t *car, Rectangle shape, Color color, ControlType_t type)
@@ -125,20 +126,37 @@ double Car_UpdateYpos(Car_t *car, int screen_h, double delta_time)
 }
 
 
-void Car_GetPolygons(const Car_t car, Line_t *out_polygons)
+void Car_GetScaledPolygons(const Car_t car, Line_t *out_polygons, double scale)
 {
     CAI_ASSERT(car.poly_count == DEF_CAR_POLYCOUNT, 
         "can't handle %d polygons\n", car.poly_count
     );
-    const flt_t x = car.relx, 
-          y = car.rely, 
-          w = car.width, 
-          l = car.len;
-    out_polygons[0] = Line_From(x,        y,      x,      y + l);
-    out_polygons[1] = Line_From(x + w,    y,      x + w,  y + l);
-    out_polygons[2] = Line_From(x,        y,      x + w,  y);
-    out_polygons[3] = Line_From(x,        y + l,  x,      y + l);
+    const flt_t x = scale * car.relx, 
+          y = scale * car.rely, 
+          w = scale * car.width, 
+          l = scale * car.len;
+    out_polygons[3] = Line_From(x - w/2,   y - l/2, 0, l); /* left */
+    out_polygons[2] = Line_From(x + w/2,   y - l/2, 0, l); /* right */
+    out_polygons[1] = Line_From(x - w/2,   y + l/2, w, 0); /* top */
+    out_polygons[0] = Line_From(x - w/2,   y - l/2, w, 0); /* bottom */
+
+    Vector2 center = {.x = x, .y = y};
+    for (int i = 0; i < car.poly_count; i++)
+    {
+        out_polygons[i] = Line_Rotate(out_polygons[i], 
+            center, 
+            DEG_TO_RAD(car.angle)
+        );
+    }
 }
+
+
+void Car_GetPolygons(const Car_t car, Line_t *out_polygons)
+{
+    Car_GetScaledPolygons(car, out_polygons, 1);
+}
+
+
 
 
 
@@ -155,6 +173,16 @@ void Car_Draw(const Car_t car, int scale, bool draw_sensors)
     rlRotatef(car.angle, 0, 0, 1);
         DrawRectangle(-w/2, -l/2, w, l, car.color);
     rlPopMatrix();
+
+
+#ifdef _DEBUG
+    Line_t *lines = MEM_ALLOCA_ARRAY(car.poly_count, sizeof(*lines));
+    Car_GetScaledPolygons(car, lines, scale);
+    for (int i = 0; i < car.poly_count; i++)
+    {
+        DrawLineV(lines[i].start, lines[i].end, GREEN);
+    }
+#endif /* _DEBUG */
 
     if (draw_sensors)
         Sensor_Draw(car.sensor, scale);

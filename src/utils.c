@@ -9,6 +9,13 @@
 
 
 
+static Reading_t *segment_intersect(
+    Reading_t *reading, 
+    Vector2 A, Vector2 B, Vector2 C, Vector2 D
+);
+static Vector2 rotate_point(Vector2 pt, Vector2 origin, double rad);
+
+
 flt_t utils_randflt(flt_t lower_bound, flt_t upper_bound)
 {
     return LERP(lower_bound, upper_bound, rand() / (double)RAND_MAX);
@@ -17,27 +24,26 @@ flt_t utils_randflt(flt_t lower_bound, flt_t upper_bound)
 
 Reading_t *Line_Intersect(Reading_t *reading, const Line_t a, const Line_t b)
 {
-    flt_t t_top = 
-        (b.end.x - b.start.x)*(a.start.y - b.start.y) 
-        - (b.end.y - b.start.y)*(a.start.x - b.start.x);
-    flt_t u_top = 
-        (b.start.y - a.start.y)*(a.start.x - a.end.x) 
-        - (b.start.x - a.start.x)*(a.start.y - a.end.y);
-    flt_t bottom = 
-        (b.end.y - b.start.y)*(a.end.x - a.start.x) 
-        - (b.end.x - b.start.x)*(a.end.y - a.start.y);
+    return segment_intersect(reading, a.start, a.end, b.start, b.end);
+}
 
 
-    if (!flt_equ(bottom, 0))
+
+static Reading_t *segment_intersect(Reading_t *reading, Vector2 A, Vector2 B, Vector2 C, Vector2 D)
+{
+    flt_t t_top = (D.x-C.x)*(A.y-C.y)-(D.y-C.y)*(A.x-C.x);
+    flt_t u_top = (C.y-A.y)*(A.x-B.x)-(C.x-A.x)*(A.y-B.y);
+    flt_t bottom = (D.y-C.y)*(B.x-A.x)-(D.x-C.x)*(B.y-A.y);
+
+    if (bottom)
     {
-        double t = t_top / bottom;
-        double u = u_top / bottom;
-        if (flt_inrange_inclusive(0, t, 1) 
-        && flt_inrange_inclusive(0, u, 1))
+        flt_t t = t_top / bottom;
+        flt_t u = u_top / bottom;
+        if (flt_inrange_inclusive(0, t, 1) && flt_inrange_inclusive(0, u, 1))
         {
             reading->dist = t;
-            reading->at.x = LERP(a.start.x, a.end.x, t);
-            reading->at.y = LERP(a.start.y, a.end.y, t);
+            reading->at.x = LERP(A.x, B.x, t);
+            reading->at.y = LERP(A.y, B.y, t);
             return reading;
         }
     }
@@ -68,6 +74,30 @@ Line_t Line_Scale(Line_t line, double scale)
         .start.y = line.start.y * scale,
         .end.x = line.end.x * scale,
         .end.y = line.end.y * scale,
+    };
+}
+
+
+
+Line_t Line_Rotate(Line_t line, Vector2 origin, double rad)
+{
+    return (Line_t){
+        .start = rotate_point(line.start, origin, rad),
+        .end = rotate_point(line.end, origin, rad),
+    };
+}
+
+
+
+static Vector2 rotate_point(Vector2 pt, Vector2 org, double rad)
+{
+    Vector2 diff = {
+        .x = pt.x - org.x,
+        .y = pt.y - org.y
+    };
+    return (Vector2) {
+        .x = org.x + (cos(rad)*diff.x - sin(rad)*diff.y),
+        .y = org.y + (sin(rad)*diff.x + cos(rad)*diff.y),
     };
 }
 

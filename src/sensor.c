@@ -1,6 +1,7 @@
 
 
 #include <math.h>
+#include <string.h> /* memset */
 #include <raylib.h>
 
 #include "include/config.h"
@@ -141,7 +142,7 @@ static Reading_t get_shortest_reading(
 
         last = touch;
         if (Line_Intersect(&touch, ray, Road_RelativeLeftBorder(road, win_w)) 
-        && last.dist 
+        && 0 != last.dist 
         && last.dist < touch.dist)
         {
             touch = last;
@@ -160,11 +161,11 @@ static Reading_t get_shortest_reading(
         Line_t *polygons = MEM_ALLOCA_ARRAY(cars[i].poly_count, sizeof(*polygons));
         Car_GetPolygons(cars[i], polygons);
         /* iterate through the car's polygons */
-        for (int j = 0; j < cars[i].poly_count; j++)
+        for (int j = 0; j < cars[i].poly_count; j++) /* fuck i and j */
         {
             last = touch;
-            if (Line_Intersect(&touch, ray, polygons[i]) 
-            && last.dist 
+            if (Line_Intersect(&touch, ray, polygons[j]) 
+            && 0 != last.dist 
             && last.dist < touch.dist)
             {
                 touch = last;

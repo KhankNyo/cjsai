@@ -2,8 +2,10 @@
 
 #include <raylib.h>
 #include <raygui.h>
+
 #include <math.h>
 #include <stdlib.h>
+#include <string.h> /* strlen */
 #include <time.h>
 
 #include "include/common.h"
@@ -12,6 +14,7 @@
 #include "include/road.h"
 #include "include/car.h"
 #include "include/utils.h"
+#include "include/mem.h"
 
 
 static Font s_font = { 0 };
@@ -33,7 +36,7 @@ static double update_cars(int win_w, int win_h, double delta_time);
 
 static int random_lane_index(void);
 static double random_lane(int win_w, int *outlane);
-static void draw_info(void);
+static void draw_info(int win_w);
 static void value_box(const char *title, int x, int y, int value);
 
 
@@ -68,7 +71,7 @@ void CAI_Init(void)
 
     s_car = Car_Init(
         &s_car,
-        DEF_CAR_RECT(0.5, 0.8 * WH_FACTOR), 
+        DEF_CAR_RECT(0.5, 0.8 * DEF_ASPECT_RATIO), 
         DEF_CAR_COLOR,
         CAR_HUMAN
     );
@@ -81,19 +84,22 @@ bool CAI_IsRunning(void)
     if (WindowShouldClose())
         return false;
 
-    PollInputEvents();
     return true;
 }
 
 
 void CAI_Run(void)
 {
-    static flt_t total_dist = 0; 
-    int win_h = GetRenderHeight();
-    int win_w = GetRenderWidth();
+    static flt_t total_dist = 0;
+    static int win_h = DEF_WIN_HEIGHT;
+    static int win_w = DEF_WIN_WIDTH;
     double delta_time = GetFrameTime();
 
     /* logic code */
+    PollInputEvents();
+    win_h = GetRenderHeight();
+    win_w = GetRenderWidth();
+
     Road_Recenter(&s_road, win_w / 2);
     double traveled = update_cars(win_w, win_h, delta_time);
     update_traffic(win_w, traveled, delta_time);
@@ -110,7 +116,7 @@ void CAI_Run(void)
         Road_Draw(s_road, 0, win_h, total_dist);
         draw_traffic(win_w);
         Car_Draw(s_car, win_w, true);
-        draw_info();
+        draw_info(win_w);
     EndDrawing();
 }
 
@@ -228,7 +234,7 @@ static void value_box(const char *title, int x, int y, int val)
 }
 
 
-static void draw_info(void)
+static void draw_info(int win_w)
 {
     int x = 60, y = 50;
     value_box("fps:", x, y, GetFPS());
@@ -246,15 +252,16 @@ static void draw_info(void)
     value_box("ypos:", x, y, s_focused_car->rely * GetRenderHeight());
 
     y += DEF_VALUEBOX_HEIGHT;
-    value_box("w : ", x, y, s_focused_car->width);
+    value_box("w : ", x, y, s_focused_car->width * win_w);
 
 
+    static char tmp[256] = { 0 };
     for (int i = 0; i < s_traffic_count; i++)
     {
-        static char tmp[32] = { 0 };
         y += DEF_VALUEBOX_HEIGHT;
         snprintf(tmp, sizeof tmp, "traffic %d: y:", i);
         value_box(tmp, x*2, y, s_traffic[i].rely * GetRenderHeight());
     }
+
 #endif /* _DEBUG */
 }
