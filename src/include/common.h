@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <limits.h>
+#include <stdlib.h>
 
 
 #ifdef _DEBUG
@@ -19,6 +20,7 @@
         if (!(expr)) {\
             fprintf(stderr, "ASSERTION FAILED in '%s' on line %d: ", __FILE__, __LINE__);\
             fprintf(stderr, __VA_ARGS__);\
+            abort();\
         }\
     }while(0)
 

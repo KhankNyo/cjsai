@@ -18,7 +18,7 @@ typedef struct Sensor_t
     const Car_t *car;
     double ray_spread, ray_len;
 
-    int ray_count;
+    usize_t ray_count;
     Line_t *rays;
     Reading_t *readings;
 
@@ -29,12 +29,13 @@ typedef struct Sensor_t
 
 
 
-Sensor_t Sensor_Init(const Car_t *car, int ray_count);
-void Sensor_Update(
-    Sensor_t *sensor, const Road_t road, const Car_t *cars, int car_count
-);
-void Sensor_Draw(const Sensor_t sensor, int win_w);
+Sensor_t Sensor_Init(const Car_t *car, usize_t ray_count);
 void Sensor_Deinit(Sensor_t *sensor);
+
+void Sensor_Update(
+    Sensor_t *sensor, const Road_t road, const Car_t *cars, usize_t car_count
+);
+void Sensor_Draw(const Sensor_t sensor);
 
 
 

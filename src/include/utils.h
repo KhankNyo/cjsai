@@ -15,6 +15,7 @@
 #define ZEROALL(type) (type){0}
 #define DEG_TO_RAD(deg) ((deg) * (PI / 180.0f))
 #define STATIC_ARRSIZE(array) (sizeof(array) / sizeof(array[0]))
+#define VEC0 (Vector2){0}
 
 
 
@@ -36,6 +37,7 @@ Reading_t *Line_Intersect(Reading_t *at, const Line_t a, const Line_t b);
 Line_t Line_From(flt_t x, flt_t y, flt_t offset_w, flt_t offset_h);
 Line_t Line_Scale(Line_t line, double scale);
 Line_t Line_Rotate(Line_t line, Vector2 origin, double rad);
+bool Line_PolyCollide(Line_t* poly1, usize_t count1, Line_t* poly2, usize_t count2);
 
 
 typedef struct fltarr_t

@@ -9,10 +9,11 @@
 
 
 
-Road_t Road_Init(int center, int width, int numlanes)
+Road_t Road_Init(int center, int width, int height, int numlanes)
 {
     Road_t road = {
         .width = width, 
+        .height = height,
         .numlanes = numlanes,
         .color = DEF_ROAD_COLOR,
 
@@ -38,23 +39,24 @@ void Road_Deinit(Road_t *road)
 
 
 
-void Road_Recenter(Road_t *road, int center)
+void Road_Recenter(Road_t *road, int center, int height)
 {
     road->left = center - road->width / 2;
     road->right = center + road->width / 2;
+    road->height = height;
 }
 
 
 
-Line_t Road_RelativeRightBorder(const Road_t road, int win_w)
+Line_t Road_RightBorder(const Road_t road)
 {
-    return Line_From((double)road.right / win_w, 0, 0, 1);
+    return Line_From(road.right, 0, 0, road.height);
 }
 
 
-Line_t Road_RelativeLeftBorder(const Road_t road, int win_w)
+Line_t Road_LeftBorder(const Road_t road)
 {
-    return Line_From((double)road.left / win_w, 0, 0, 1);
+    return Line_From(road.left, 0, 0, road.height);
 }
 
 

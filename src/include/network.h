@@ -13,11 +13,21 @@ typedef struct NeuralNet_t
 } NeuralNet_t;
 
 
-NeuralNet_t NeuralNet_Init(usize_t *neurons, usize_t neuron_count);
+/* each elems in level contains the number of neuron that level has
+ *  level: {2, 1, 3}, neuron_count: 3
+ *  NOTE: neuron_count >= 2
+ *
+ *  there will be 2 levels in this network, where
+ *      level 0: in: 2, out: 1
+ *      level 1: in: 1, out: 3
+ */
+NeuralNet_t NeuralNet_Init(usize_t *level, usize_t neuron_count);
 void NeuralNet_Deinit(NeuralNet_t *nn);
 
-/* a wrapper around level's feed forward */
-bitarr_t NeuralNet_FeedForward(NeuralNet_t *nn, bitarr_t given_input);
+/* a wrapper around level's feed forward,
+ * assumes that the input field of nn->levels[0] is already poppulated 
+ */
+bitarr_t NeuralNet_FeedForward(NeuralNet_t *nn);
 
 
 /* 0 <= similarity <= 1,

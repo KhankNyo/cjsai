@@ -13,20 +13,21 @@
 typedef struct Road_t
 {
     int left, right;
-    int width, lane_width;
+    int width, height;
+    int lane_width;
     int numlanes;
     int dash_len, dash_width;
     Color dash_color, color;
 } Road_t;
 
-Road_t Road_Init(int center, int width, int numlanes);
+Road_t Road_Init(int center, int width, int height, int numlanes);
 void Road_Deinit(Road_t *road);
 
 
-void Road_Recenter(Road_t *road, int center);
+void Road_Recenter(Road_t *road, int center, int height);
 
-Line_t Road_RelativeRightBorder(const Road_t road, int win_w);
-Line_t Road_RelativeLeftBorder(const Road_t road, int win_h);
+Line_t Road_RightBorder(const Road_t road);
+Line_t Road_LeftBorder(const Road_t road);
 
 /* draws whole road */
 void Road_Draw(const Road_t, int y_start, int y_end, int divider_offset);

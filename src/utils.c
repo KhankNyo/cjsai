@@ -88,6 +88,24 @@ Line_t Line_Rotate(Line_t line, Vector2 origin, double rad)
 }
 
 
+bool Line_PolyCollide(Line_t* poly1, usize_t count1, Line_t* poly2, usize_t count2)
+{
+    for (usize_t i = 0; i < count1; i++)
+    {
+        for (usize_t k = 0; k < count2; k++)
+        {
+            Reading_t reading;
+            if (Line_Intersect(&reading, poly1[i], poly2[k]))
+                return true;
+        }
+    }
+    return false;
+}
+
+
+
+
+
 
 static Vector2 rotate_point(Vector2 pt, Vector2 org, double rad)
 {

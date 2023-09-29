@@ -16,7 +16,7 @@ typedef enum ControlType_t
 
 struct Car_t
 {
-    double relx, rely;
+    double x, y;
     double angle, friction;
     flt_t speed, accel, decel;
     flt_t topspeed, max_reverse_spd;
@@ -28,37 +28,47 @@ struct Car_t
     Sensor_t sensor;
     NeuralNet_t brain;
 
-
-    Color color;
     bool damaged;
 };
 
 
 /* note: shape's x and y are between 0 and 1 */
-Car_t Car_Init(Car_t *car, Rectangle shape, Color color, ControlType_t type);
+Car_t Car_Init(Car_t *car, Rectangle shape, ControlType_t type);
 void Car_Deinit(Car_t *car);
+
+void Car_Draw(const Car_t, Color color, bool draw_sensors, bool draw_collidebox);
+
+
+
+/* manual updating functions: */
+
 
 
 double Car_ApplyFriction(Car_t *car, double delta_time);
-void Car_UpdateControls(Car_t *car, double delta_time);
+
+
+void Car_UpdateControls(Car_t *car);
+void Car_UpdateSpeed(Car_t* car, double delta_time);
+
+/* scales the car's position */
+void Car_Reposition(Car_t* car, double xscale, double yscale);
 
 /* returns dist traveled in the y direction */
-double Car_UpdateYpos(Car_t *car, int screen_height, double delta_time);
+double Car_UpdateYpos(Car_t *car, double delta_time, double y_offset);
 
 /* returns dist traveled in the x direction */
-double Car_UpdateXpos(Car_t *car, int screen_width, double delta_time);
+double Car_UpdateXpos(Car_t *car, double delta_time, double x_offset);
 
 
-void Car_UpdateSensor(Car_t *car, const Road_t road, const Car_t *traffic, int traffic_count);
+void Car_UpdateSensor(Car_t* car, const Road_t road, const Car_t* traffic, usize_t traffic_count);
+bool Car_CheckCollision(Car_t *car, const Road_t road, const Car_t *traffic, int traffic_count);
 
 /* out_polygons must be able to contain car.poly_count elems */
 void Car_GetPolygons(const Car_t car, Line_t *out_polygons);
 
 
-void Car_GetScaledPolygons(const Car_t car, Line_t *out_polygons, double scale);
 
 
-void Car_Draw(const Car_t, int scale, bool draw_sensors);
 
 
 #endif /* CAI_CAR_H */

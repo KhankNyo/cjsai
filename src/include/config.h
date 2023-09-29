@@ -15,6 +15,9 @@
 
 #define DEF_VALUEBOX_HEIGHT 20 
 #define DEF_VALUEBOX_WIDTH 50
+#define DEF_VALUEBOX(argx, argy) (Rectangle){\
+    .x = argx, .y = argy,\
+    .width = DEF_VALUEBOX_WIDTH, .height = DEF_VALUEBOX_HEIGHT}
 
 #define DEF_ROAD_WIDTH ((double)DEF_WIN_WIDTH / 4)
 #define DEF_ROAD_DASHLEN 30
@@ -46,7 +49,7 @@
 
 #define DEF_CAR_COLOR BLUE
 
-#define DEF_CAR_WIDTH ((double)DEF_ROAD_LANEWIDTH * 5/8 / DEF_WIN_WIDTH)
+#define DEF_CAR_WIDTH ((double)DEF_ROAD_LANEWIDTH * 5/8)
 #define DEF_CAR_LEN (DEF_CAR_WIDTH * 7/4)
 
 #define DEF_CAR_RECT(arg_x, arg_y) \
@@ -56,11 +59,15 @@
 
 
 
-#define DEF_SENSOR_RAYLEN (150.0f/DEF_WIN_HEIGHT)
+#define DEF_SENSOR_RAYLEN (150.0f)
 #define DEF_SENSOR_RAYSPREAD (90)
 #define DEF_SENSOR_COLORTOUCHED BLACK
 #define DEF_SENSOR_COLORNORMAL YELLOW
 #define DEF_SENSOR_RAYCOUNT 6
+
+
+#define DEF_NN_ARCHITECTURE (usize_t[2]){DEF_SENSOR_RAYCOUNT, 4}
+#define DEF_NN_SIZE 2
 
 
 #endif /* CAI_CONFIG_H */
