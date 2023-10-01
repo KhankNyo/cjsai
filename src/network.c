@@ -1,5 +1,6 @@
 
 #include <string.h> /* memset */
+#include <raylib.h>
 
 #include "include/network.h"
 #include "include/mem.h"
@@ -99,5 +100,15 @@ void NeuralNet_Mutate(NeuralNet_t *nn, const NeuralNet_t src, double similarity)
         }
     }
 }
+
+
+
+
+void NeuralNet_Draw(const NeuralNet_t nn)
+{
+
+}
+
+
 
 
