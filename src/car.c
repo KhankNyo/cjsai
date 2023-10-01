@@ -15,8 +15,9 @@
 
 static void setup_inputs(Car_t *car);
 
-Car_t Car_Init(Car_t *car, Rectangle shape, ControlType_t type)
+Car_t Car_Init(Car_t *car, Rectangle shape, const CarData_t data)
 {
+    CAI_ASSERT(car != NULL, "Car_Init does not accept NULL");
     *car = (Car_t){
         .x = shape.x,
         .y = shape.y,
@@ -28,21 +29,16 @@ Car_t Car_Init(Car_t *car, Rectangle shape, ControlType_t type)
         .speed = 0,
         .damaged = false,
 
-        .type = type,
         .direction = Control_Init(),
         .sensor = Sensor_Init(car, DEF_SENSOR_RAYCOUNT),
 
-        .poly_count = DEF_CAR_POLYCOUNT,
-        .friction = DEF_CAR_FRICTION,
-        .topspeed = DEF_CAR_TOPSPD,
-        .max_reverse_spd = -DEF_CAR_REVERSESPD,
-        .accel = DEF_CAR_ACCEL,
-        .decel = DEF_CAR_DECEL,
+        .data = data,
     };
 
-    if (type == CAR_AI)
+    if (data.arch != NULL && data.type == CAR_AI)
     {
-        car->brain = NeuralNet_Init(DEF_NN_ARCHITECTURE, DEF_NN_SIZE);
+        car->brain = NeuralNet_Init(*data.arch);
+        car->data.arch = NULL;
     }
     return *car;
 }

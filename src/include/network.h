@@ -6,6 +6,19 @@
 #include "level.h"
 
 
+typedef struct NNArch_t
+{
+    usize_t *levels;
+    usize_t count;
+} NNArch_t;
+
+
+NNArch_t NNArch_Init(usize_t count, usize_t *levels);
+NNArch_t NNArch_Change(NNArch_t *arch, usize_t count, usize_t *levels);
+void NNArch_Deinit(NNArch_t *arch);
+
+
+
 typedef struct NeuralNet_t
 {
     Level_t *levels;
@@ -21,7 +34,7 @@ typedef struct NeuralNet_t
  *      level 0: in: 2, out: 1
  *      level 1: in: 1, out: 3
  */
-NeuralNet_t NeuralNet_Init(usize_t *level, usize_t neuron_count);
+NeuralNet_t NeuralNet_Init(const NNArch_t arch);
 void NeuralNet_Deinit(NeuralNet_t *nn);
 void NeuralNet_Copy(NeuralNet_t *nn, const NeuralNet_t src);
 
@@ -39,6 +52,10 @@ void NeuralNet_Mutate(NeuralNet_t *dst, const NeuralNet_t src, double similarity
 
 
 void NeuralNet_Draw(const NeuralNet_t nn, Rectangle container);
+
+
+
+
 
 
 

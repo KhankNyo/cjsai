@@ -20,11 +20,14 @@
 static Font s_font = { 0 };
 
 static Road_t s_road = { 0 };
+
 static Car_t s_traffic[DEF_TRAFFIC_COUNT] = { 0 };
 static Color s_traffic_color;
 static int s_trafficlanes[DEF_TRAFFIC_COUNT] = { 0 };
 static int s_traffic_count = DEF_TRAFFIC_COUNT;
 
+
+static NNArch_t s_arch = DEF_NN_ARCHITECTURE;
 static Car_t s_cars[5000] = { 0 };
 static Color s_car_color;
 static int s_car_count = STATIC_ARRSIZE(s_cars);

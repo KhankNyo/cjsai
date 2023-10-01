@@ -9,17 +9,41 @@
 
 
 
-NeuralNet_t NeuralNet_Init(usize_t *neurons, usize_t neuron_count)
+
+
+
+
+NNArch_t NNArch_Init(usize_t count, usize_t *levels)
 {
-    CAI_ASSERT(neuron_count > 1, "There must be at least 2 neurons in a neural network\n");
+}
+
+
+NNArch_t NNArch_Change(NNArch_t *arch, usize_t count, usize_t *levels)
+{
+}
+
+
+void NNArch_Deinit(NNArch_t *arch)
+{
+}
+
+
+
+
+
+
+
+NeuralNet_t NeuralNet_Init(const NNArch_t arch)
+{
+    CAI_ASSERT(arch.count > 1, "There must be at least 2 neurons in a neural network\n");
 
     NeuralNet_t nn = {
-        .levels = MEM_ALLOC_ARRAY(neuron_count, sizeof(nn.levels[0])),
-        .count = neuron_count - 1,
+        .levels = MEM_ALLOC_ARRAY(arch.count, sizeof(nn.levels[0])),
+        .count = arch.count - 1,
     };
-    for (usize_t i = 0; i < neuron_count - 1; i++)
+    for (usize_t i = 0; i < nn.count; i++)
     {
-        nn.levels[i] = Level_Init(neurons[i], neurons[i + 1]);
+        nn.levels[i] = Level_Init(arch.levels[i], arch.levels[i + 1]);
     }
     return nn;
 }

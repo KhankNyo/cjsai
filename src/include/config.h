@@ -66,8 +66,12 @@
 #define DEF_SENSOR_RAYCOUNT 7
 
 
-#define DEF_NN_ARCHITECTURE (usize_t[2]){DEF_SENSOR_RAYCOUNT, 4}
 #define DEF_NN_SIZE 2
+#define DEF_NN_ARCHITECTURE \
+    (NNArch_t){\
+        .levels = (usize_t[DEF_NN_SIZE]){DEF_SENSOR_RAYCOUNT, 4},\
+        .count = DEF_NN_SIZE}
+
 #define DEF_LEVEL_NODE_RADIUS 20.f
 
 
