@@ -104,9 +104,17 @@ void NeuralNet_Mutate(NeuralNet_t *nn, const NeuralNet_t src, double similarity)
 
 
 
-void NeuralNet_Draw(const NeuralNet_t nn)
+void NeuralNet_Draw(const NeuralNet_t nn, Rectangle container)
 {
+    DrawRectangleRec(container, BLACK);
 
+    double level_height = container.height / nn.count;
+    container.height = level_height;
+    for (usize_t i = 0; i < nn.count; i++)
+    {
+        Level_Draw(nn.levels[i], container, 0 == i);
+        container.y -= level_height;
+    }
 }
 
 

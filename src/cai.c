@@ -25,7 +25,7 @@ static Color s_traffic_color;
 static int s_trafficlanes[DEF_TRAFFIC_COUNT] = { 0 };
 static int s_traffic_count = DEF_TRAFFIC_COUNT;
 
-static Car_t s_cars[1000] = { 0 };
+static Car_t s_cars[5000] = { 0 };
 static Color s_car_color;
 static int s_car_count = STATIC_ARRSIZE(s_cars);
 
@@ -375,6 +375,7 @@ static double update_cars(double delta_time)
     {
         bestcar_moved = Car_UpdateYpos(s_bestcar, delta_time, 0);
         Car_UpdateXpos(s_bestcar, delta_time, 0);
+        Car_UpdateSensor(s_bestcar, s_road, s_traffic, s_traffic_count);
         s_bestcar->y += bestcar_moved;
     }
 
@@ -400,9 +401,9 @@ static double update_cars(double delta_time)
         }
         else
         {
-            Car_UpdateSensor(node->car, s_road, s_traffic, s_traffic_count);
             if (!node->car->damaged)
             {
+                Car_UpdateSensor(node->car, s_road, s_traffic, s_traffic_count);
                 Car_ApplyFriction(node->car, delta_time);
                 Car_UpdateSpeed(node->car, delta_time);
                 Car_UpdateControls(node->car);
@@ -486,7 +487,14 @@ static void draw_cars(Color color)
     for (int i = 0; i < s_car_count; i++)
         Car_Draw(s_cars[i], transparent, false, false);
 #endif /* LIST */
+
     Car_Draw(*s_bestcar, color, true, true);
+    NeuralNet_Draw(s_bestcar->brain, (Rectangle){
+        .x = s_road.right + 10, 
+        .y = s_height*0.3, 
+        .width = s_width - s_road.right - 20,
+        .height = s_height*0.4f,
+    });
 }
 
 
@@ -553,6 +561,10 @@ static void draw_info(void)
 
     y += DEF_VALUEBOX_HEIGHT;
     value_box("updated:", x, y, s_updated);
+
+    y += DEF_VALUEBOX_HEIGHT;
+    value_box("offset:", x, y, s_bestcar->sensor.readings[0].dist * 100);
+    
 
 #ifdef _DEBUG
 

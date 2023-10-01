@@ -38,7 +38,7 @@ bitarr_t NeuralNet_FeedForward(NeuralNet_t *nn);
 void NeuralNet_Mutate(NeuralNet_t *dst, const NeuralNet_t src, double similarity);
 
 
-void NeuralNet_Draw(const NeuralNet_t nn);
+void NeuralNet_Draw(const NeuralNet_t nn, Rectangle container);
 
 
 

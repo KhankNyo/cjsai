@@ -80,7 +80,10 @@ void Car_UpdateControls(Car_t *car)
         car->direction.forward = bitarr_Get(output, 0);
         car->direction.left = bitarr_Get(output, 1);
         car->direction.right = bitarr_Get(output, 2);
-        car->direction.reverse = bitarr_Get(output, 3);
+        if (!(car->direction.forward && car->direction.left && car->direction.right))
+        {
+            car->direction.reverse = bitarr_Get(output, 3);
+        }
     }
     break;
     }
@@ -277,7 +280,8 @@ static void setup_inputs(Car_t *car)
     );
     for (usize_t i = 0; i < car->sensor.ray_count; i++)
     {
-        input->at[i] = car->sensor.readings[i].dist;
+        input->at[i] =  car->sensor.readings[i].dist;
     }
-    input->at[input->count] = car->speed;
 }
+
+

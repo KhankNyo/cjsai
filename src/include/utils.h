@@ -70,6 +70,7 @@ typedef struct bitarr_t
 #define bitarr_Init() ((bitarr_t){ 0 })
 #define bitarr_Deinit(p_bitarr) ((*(p_bitarr)) = bitarr_Init())
 #define bitarr_Copy(p_dst, src) memcpy(p_dst, &(src), BITARR_COUNT / BITS_IN_WORD)
+#define bitarr_Reset(p_bitarr) (*(p_bitarr) = bitarr_Init())
 
 static inline unsigned bitarr_Get(bitarr_t bitarray, unsigned index)
 {
