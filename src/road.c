@@ -47,6 +47,12 @@ void Road_Recenter(Road_t *road, int center, int height)
 }
 
 
+double Road_GetCenter(const Road_t road)
+{
+    return road.left + (int)(road.width / 2);
+}
+
+
 
 Line_t Road_RightBorder(const Road_t road)
 {

@@ -23,6 +23,7 @@ typedef struct NeuralNet_t
  */
 NeuralNet_t NeuralNet_Init(usize_t *level, usize_t neuron_count);
 void NeuralNet_Deinit(NeuralNet_t *nn);
+void NeuralNet_Copy(NeuralNet_t *nn, const NeuralNet_t src);
 
 /* a wrapper around level's feed forward,
  * assumes that the input field of nn->levels[0] is already poppulated 
@@ -31,10 +32,10 @@ bitarr_t NeuralNet_FeedForward(NeuralNet_t *nn);
 
 
 /* 0 <= similarity <= 1,
- * indicates the similarity between the muted nn and nn before mutation
+ * indicates how similar the new dst is to src
  * in practice, this function adjusts the weights and biases according to similarity
  */
-void NeuralNet_Mutate(NeuralNet_t *nn, double similarity);
+void NeuralNet_Mutate(NeuralNet_t *dst, const NeuralNet_t src, double similarity);
 
 
 

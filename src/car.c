@@ -10,6 +10,11 @@
 #include "include/mem.h"
 
 
+
+
+
+static void setup_inputs(Car_t *car);
+
 Car_t Car_Init(Car_t *car, Rectangle shape, ControlType_t type)
 {
     *car = (Car_t){
@@ -17,6 +22,7 @@ Car_t Car_Init(Car_t *car, Rectangle shape, ControlType_t type)
         .y = shape.y,
         .width = shape.width, 
         .len = shape.height,
+        .traveled = 0,
 
         .angle = 0,
         .speed = 0,
@@ -69,15 +75,7 @@ void Car_UpdateControls(Car_t *car)
     case CAR_HUMAN: Control_QueryInputs(&car->direction); break;
     case CAR_AI: 
     {
-        fltarr_t *input = &car->brain.levels[0].inputs;
-        CAI_ASSERT(input->count == car->sensor.ray_count, 
-            "%zu != %zu\n", input->count, car->sensor.ray_count
-        );
-        for (usize_t i = 0; i < input->count; i++)
-        {
-            input->at[i] = car->sensor.readings[i].dist;
-        }
-
+        setup_inputs(car);
         bitarr_t output = NeuralNet_FeedForward(&car->brain);
         car->direction.forward = bitarr_Get(output, 0);
         car->direction.left = bitarr_Get(output, 1);
@@ -119,12 +117,12 @@ void Car_UpdateSpeed(Car_t* car, double delta_time)
     }
     if (car->speed < car->topspeed && car->direction.forward)
     {
-        double rate = car->speed > 0 ? car->accel : car->decel;
+        double rate = car->speed >= 0 ? DEF_CAR_ACCEL : DEF_CAR_DECEL;
         car->speed += rate * delta_time;
     }
     if (car->speed > car->max_reverse_spd && car->direction.reverse)
     {
-        car->speed -= car->decel * delta_time;
+        car->speed -= DEF_CAR_DECEL * delta_time;
     }
 }
 
@@ -152,9 +150,20 @@ bool Car_CheckCollision(Car_t *car, const Road_t road, const Car_t *traffic, int
     Line_t* trafficpoly = MEM_ALLOCA_ARRAY(car->poly_count, sizeof(Line_t));
     Car_GetPolygons(*car, carpoly);
 
+    for (int i = 0; i < car->poly_count; i++)
+    {
+        if ((carpoly[i].end.x < road.left || carpoly[i].start.x < road.left)
+        || (carpoly[i].end.x > road.right || carpoly[i].start.x > road.right))
+        {
+            goto damaged;
+        }
+
+    }
+
+
     for (int i = 0; i < traffic_count; i++)
     {
-        CAI_ASSERT(car->poly_count == traffic[i].poly_count, 
+        CAI_ASSERT(car->poly_count == traffic[0].poly_count, 
             "Focused car and AI should have the same poly count."
         );
         Car_GetPolygons(traffic[i], trafficpoly);
@@ -166,16 +175,7 @@ bool Car_CheckCollision(Car_t *car, const Road_t road, const Car_t *traffic, int
         }
     }
 
-    Line_t border = Road_LeftBorder(road);
-    if (Line_PolyCollide(carpoly, car->poly_count, &border, 1))
-        goto damaged;
-    border = Road_RightBorder(road);
-    if (Line_PolyCollide(carpoly, car->poly_count, &border, 1))
-        goto damaged;
-
-
     return false;
-    /* gotos are here for the sole purpose of pissing people off */
 damaged:
     car->speed = 0;
     return car->damaged = true;
@@ -197,7 +197,8 @@ double Car_UpdateYpos(Car_t *car, double delta_time, double y_offset)
 {
     const double dist = car->speed * delta_time * DISTANCE_FACTOR;
     const double y = cos(DEG_TO_RAD(car->angle)) * dist;
-    car->y += y + y_offset;
+    car->y -= y + y_offset;
+    car->traveled += y;
     return y;
 }
 
@@ -211,10 +212,10 @@ void Car_GetPolygons(const Car_t car, Line_t *out_polygons)
           y = car.y, 
           w = car.width, 
           l = car.len;
-    out_polygons[3] = Line_From(x - w/2,   y - l/2, 0, l); /* left */
-    out_polygons[2] = Line_From(x + w/2,   y - l/2, 0, l); /* right */
-    out_polygons[1] = Line_From(x - w/2,   y + l/2, w, 0); /* top */
-    out_polygons[0] = Line_From(x - w/2,   y - l/2, w, 0); /* bottom */
+    out_polygons[0] = Line_From(x - w/2,   y + l/2, w, 0); /* top */
+    out_polygons[1] = Line_From(x - w/2,   y - l/2, w, 0); /* bottom */
+    out_polygons[2] = Line_From(x - w/2,   y - l/2, 0, l); /* left */
+    out_polygons[3] = Line_From(x + w/2,   y - l/2, 0, l); /* right */
 
     Vector2 center = {.x = x, .y = y};
     for (int i = 0; i < car.poly_count; i++)
@@ -261,3 +262,22 @@ void Car_Draw(const Car_t car, Color color, bool draw_sensors, bool draw_collide
     }
 }
 
+
+
+
+
+
+
+
+static void setup_inputs(Car_t *car)
+{
+    fltarr_t *input = &car->brain.levels[0].inputs;
+    CAI_ASSERT(input->count == DEF_NN_ARCHITECTURE[0], 
+        "%zu != %zu\n", input->count, DEF_NN_ARCHITECTURE[0]
+    );
+    for (usize_t i = 0; i < car->sensor.ray_count; i++)
+    {
+        input->at[i] = car->sensor.readings[i].dist;
+    }
+    input->at[input->count] = car->speed;
+}

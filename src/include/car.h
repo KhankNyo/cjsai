@@ -17,6 +17,8 @@ typedef enum ControlType_t
 struct Car_t
 {
     double x, y;
+    double traveled;
+
     double angle, friction;
     flt_t speed, accel, decel;
     flt_t topspeed, max_reverse_spd;

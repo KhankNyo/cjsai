@@ -21,6 +21,11 @@ flt_t utils_randflt(flt_t lower_bound, flt_t upper_bound)
     return LERP(lower_bound, upper_bound, rand() / (double)RAND_MAX);
 }
 
+flt_t f32lerp(flt_t start, flt_t end, flt_t percentage)
+{
+    return start + (end - start) * percentage;
+}
+
 
 Reading_t *Line_Intersect(Reading_t *reading, const Line_t a, const Line_t b)
 {
@@ -127,6 +132,29 @@ fltarr_t fltarr_Init(void)
 {
     return (fltarr_t){ 0 };
 }
+
+
+fltarr_t fltarr_Copy(fltarr_t *dst, const fltarr_t src)
+{
+    fltarr_t arr;
+    if (NULL == dst)
+    {
+        arr = fltarr_Init();
+        fltarr_Reserve(&arr, src.count);
+        dst = &arr;
+    }
+    else if (dst->count < src.count)
+    {
+        MEM_FREE_ARRAY(dst->at);
+        dst->at = MEM_ALLOC_ARRAY(src.count, sizeof(dst->at[0]));
+    }
+
+    dst->count = src.count;
+    for (usize_t i = 0; i < src.count; i++)
+        dst->at[i] = src.at[i];
+    return *dst;
+}
+
 
 flt_t fltarr_Push(fltarr_t *arr, flt_t number)
 {

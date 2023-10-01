@@ -25,6 +25,7 @@ void Road_Deinit(Road_t *road);
 
 
 void Road_Recenter(Road_t *road, int center, int height);
+double Road_GetCenter(const Road_t road);
 
 Line_t Road_RightBorder(const Road_t road);
 Line_t Road_LeftBorder(const Road_t road);

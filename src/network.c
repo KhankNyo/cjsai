@@ -35,6 +35,28 @@ void NeuralNet_Deinit(NeuralNet_t *nn)
 }
 
 
+void NeuralNet_Copy(NeuralNet_t *dst, const NeuralNet_t src)
+{
+    if (dst->count != src.count)
+    {
+        dst->levels = MEM_REALLOC_ARRAY(dst->levels, src.count, sizeof(dst->levels[0]));
+        for (usize_t i = dst->count; i < src.count; i++)
+        {
+            dst->levels[i] = Level_Copy(NULL, src.levels[i]);
+        }
+    }
+
+    for (usize_t i = 0; i < dst->count; i++)
+    {
+        Level_Copy(&dst->levels[i], src.levels[i]);
+    }
+    dst->count = src.count;
+}
+
+
+
+
+
 
 
 bitarr_t NeuralNet_FeedForward(NeuralNet_t *nn)
@@ -48,14 +70,16 @@ bitarr_t NeuralNet_FeedForward(NeuralNet_t *nn)
 }
 
 
-void NeuralNet_Mutate(NeuralNet_t *nn, double similarity)
+void NeuralNet_Mutate(NeuralNet_t *nn, const NeuralNet_t src, double similarity)
 {
+    NeuralNet_Copy(nn, src);
+
     for (usize_t i = 0; i < nn->count; i++)
     {
         for (usize_t j = 0; j < nn->levels[i].biases.count; j++)
         {
             nn->levels[i].biases.at[j] = LERP(
-                nn->levels[i].biases.at[j],
+                src.levels[i].biases.at[j],
                 utils_randflt(-1, 1),
                 similarity
             );
@@ -67,7 +91,7 @@ void NeuralNet_Mutate(NeuralNet_t *nn, double similarity)
             for (usize_t k = 0; k < nn->levels[i].output_count; k++)
             {
                 nn->levels[i].weights[j].at[k] = LERP(
-                    nn->levels[i].weights[j].at[k],
+                    src.levels[i].weights[j].at[k],
                     utils_randflt(-1, 1),
                     similarity
                 );

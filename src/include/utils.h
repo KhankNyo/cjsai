@@ -10,16 +10,17 @@
 
 
 
-#define LERP(f64_start, f64_end, f64_percentage) \
-    (double)((f64_start) + (double)((f64_end) - (f64_start))*(f64_percentage))
+#define LERP(fstart, fend, fpercentage) f32lerp(fstart, fend, fpercentage)
 #define ZEROALL(type) (type){0}
 #define DEG_TO_RAD(deg) ((deg) * (PI / 180.0f))
 #define STATIC_ARRSIZE(array) (sizeof(array) / sizeof(array[0]))
+#define BYTE_PERCENTAGE(percentage) ((uint8_t)((double)((percentage))*(double)UINT8_MAX))
 #define VEC0 (Vector2){0}
 
 
 
 flt_t utils_randflt(flt_t lower_bound, flt_t upper_bound);
+flt_t f32lerp(flt_t start, flt_t end, flt_t percentage);
 
 
 typedef struct Line_t
@@ -49,6 +50,10 @@ typedef struct fltarr_t
 
 fltarr_t fltarr_Init(void);
 void fltarr_Deinit(fltarr_t *arr);
+
+/* dst can be NULL */
+fltarr_t fltarr_Copy(fltarr_t *dst, const fltarr_t src);
+
 /* returns newly pushed elem */
 flt_t fltarr_Push(fltarr_t *arr, flt_t number);
 void fltarr_Reserve(fltarr_t *arr, usize_t nelem);
@@ -64,6 +69,7 @@ typedef struct bitarr_t
 
 #define bitarr_Init() ((bitarr_t){ 0 })
 #define bitarr_Deinit(p_bitarr) ((*(p_bitarr)) = bitarr_Init())
+#define bitarr_Copy(p_dst, src) memcpy(p_dst, &(src), BITARR_COUNT / BITS_IN_WORD)
 
 static inline unsigned bitarr_Get(bitarr_t bitarray, unsigned index)
 {

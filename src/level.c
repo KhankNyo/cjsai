@@ -1,5 +1,4 @@
 
-#include <stdlib.h> /* rand, srand */
 #include <time.h> /* time */
 #include <string.h> /* memset */
 
@@ -25,21 +24,23 @@ Level_t Level_Init(usize_t input_count, usize_t output_count)
     );
 
 
+    usize_t weight_count = input_count * output_count;
     Level_t level = {
         .output_count = output_count,
         .inputs = fltarr_Init(),
         .outputs = bitarr_Init(),
         .biases = fltarr_Init(),
         .weights = MEM_ALLOC_ARRAY(
-            input_count, sizeof(level.weights[0])
+            weight_count, sizeof(level.weights[0])
         ),
+        .weight_count = weight_count,
     };
 
     fltarr_Reserve(&level.inputs, input_count);
     level.inputs.count = input_count;
     fltarr_Reserve(&level.biases, input_count);
     level.biases.count = input_count;
-    for (usize_t i = 0; i < input_count; i++)
+    for (usize_t i = 0; i < level.weight_count; i++)
     {
         level.weights[i] = fltarr_Init();
         fltarr_Reserve(&level.weights[i], output_count);
@@ -62,6 +63,41 @@ void Level_Deinit(Level_t* level)
     fltarr_Deinit(&level->inputs);
 
     memset(level, 0, sizeof *level);
+}
+
+
+
+
+Level_t Level_Copy(Level_t *dst, const Level_t src)
+{
+    Level_t l;
+    if (NULL == dst)
+    {
+        l = Level_Init(src.inputs.count, src.output_count);
+        dst = &l;
+    }
+
+
+    if (dst->weight_count < src.weight_count)
+    {
+        dst->weights = MEM_REALLOC_ARRAY(dst->weights, 
+            src.inputs.count * src.output_count, sizeof(dst->weights[0])
+        );
+        for (usize_t i = dst->weight_count; i < src.weight_count; i++)
+            dst->weights[i] = fltarr_Copy(NULL, src.weights[i]);
+    }
+
+    usize_t min_weightcount = src.weight_count < dst->weight_count 
+        ? src.weight_count 
+        : dst->weight_count;
+    for (usize_t i = 0; i < min_weightcount; i++)
+        fltarr_Copy(&dst->weights[i], src.weights[i]);
+
+    fltarr_Copy(&dst->inputs, src.inputs);
+    fltarr_Copy(&dst->biases, src.biases);
+    bitarr_Copy(&dst->outputs, src.outputs);
+    dst->output_count = src.output_count;
+    return *dst;
 }
 
 
