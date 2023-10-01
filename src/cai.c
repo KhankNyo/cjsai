@@ -313,26 +313,8 @@ static Car_t default_traffic(Car_t *traffic, int lane, int rely)
 
 static void respawn_traffic(int i, double spawn)
 {
-    static int lane = 0;
-    static bool spawnleft = true;
-
-    s_trafficlanes[i] = lane;
     s_traffic[i].y = spawn;
-    s_traffic[i].x = Road_CenterOfLane(s_road, lane);
-
-    if (spawnleft && lane < s_road.numlanes - 1)
-    {
-        lane++;
-    }
-    else if (lane > 1) 
-    {
-        spawnleft = false;
-        lane--;
-    }
-    else 
-    {
-        spawnleft = true;
-    }
+    s_traffic[i].x = random_lane(&s_trafficlanes[i]);
 }
 
 static void update_traffic(double traveled, double delta_time)

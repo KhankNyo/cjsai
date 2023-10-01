@@ -45,7 +45,7 @@
 #define DEF_CAR_ACCEL 25.0f
 #define DEF_CAR_DECEL (DEF_CAR_ACCEL * 3)
 #define DEF_CAR_REVERSESPD 0.0f
-#define DEF_CAR_TOPSPD (40*1.6)
+#define DEF_CAR_TOPSPD (70*1.6)
 
 #define DEF_CAR_COLOR DARKBLUE
 
