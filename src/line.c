@@ -93,6 +93,18 @@ bool Line_PolyCollide(Line_t* poly1, usize_t count1, Line_t* poly2, usize_t coun
 
 
 
+
+
+
+bool Poly_Collide(const Polygon_t a, const Polygon_t b)
+{
+
+}
+
+
+
+
+
 static Reading_t *segment_intersect(Reading_t *reading, Vector2 A, Vector2 B, Vector2 C, Vector2 D)
 {
     flt_t t_top = (D.x-C.x)*(A.y-C.y)-(D.y-C.y)*(A.x-C.x);
