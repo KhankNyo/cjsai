@@ -18,7 +18,6 @@ typedef struct Level_t
 
     fltarr_t* weights;
     usize_t weight_count;
-    flt_t node_radius;
 } Level_t;
 
 
@@ -31,7 +30,7 @@ bitarr_t Level_FeedInput(Level_t *level);
 bitarr_t Level_FeedForward(Level_t *level, bitarr_t given_input);
 
 
-void Level_Draw(const Level_t level, Rectangle bound, bool draw_input);
+void Level_Draw(const Level_t level, Rectangle bound, flt_t node_radius, bool draw_input);
 
 
 

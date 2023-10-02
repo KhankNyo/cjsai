@@ -15,9 +15,12 @@
 #include "include/car.h"
 #include "include/utils.h"
 #include "include/mem.h"
+#include "include/save.h"
+
 
 
 static Font s_font = { 0 };
+static int s_font_size = DEF_FONT_SIZE;
 
 static Road_t s_road = { 0 };
 
@@ -27,38 +30,33 @@ static int s_trafficlanes[DEF_TRAFFIC_COUNT] = { 0 };
 static int s_traffic_count = DEF_TRAFFIC_COUNT;
 
 
-static NNArch_t s_arch = DEF_NN_ARCHITECTURE;
-static Car_t s_cars[5000] = { 0 };
+static NNArch_t s_arch = {0};
+static Car_t s_cars[15000] = { 0 };
 static Color s_car_color;
 static int s_car_count = STATIC_ARRSIZE(s_cars);
 
 
 static Car_t *s_bestcar = NULL;
+static NeuralNet_t *s_bestbrain = NULL;
+static int s_kill_threshold = DEF_KILL_THRESHOLD;
 
 
 
 static int s_height = DEF_WIN_HEIGHT;
-#define BESTCAR_YPOS() (s_height*0.8)
+#define BESTCAR_YPOS() (s_height*0.7)
+#define GET_KILL_THRESHOLD() (s_height * s_kill_threshold)
 static int s_width = DEF_WIN_WIDTH;
-static int s_updated = 0;
 
 
 
-#define LIST
-#define STATIC_LIST
 
 typedef struct CarList_t
 {
     Car_t *car;
     struct CarList_t *next;
 } CarList_t;
-#ifdef STATIC_LIST
-    static CarList_t s_pool[STATIC_ARRSIZE(s_cars)];
-    static CarList_t *s_stack[STATIC_ARRSIZE(s_cars)];
-#else
-    static CarList_t *s_pool = NULL;
-    static CarList_t **s_stack = NULL;
-#endif /* STATIC_LIST */
+static CarList_t *s_pool = NULL;
+static CarList_t **s_stack = NULL;
 static int s_poolsize = 0;
 static CarList_t **s_sp = NULL;
 #define PUSH(p_carlist) (*(--s_sp) = (p_carlist))
@@ -85,9 +83,14 @@ static void draw_cars(Color color);
 
 
 static void reset(double coefficient);
+static void save_bestcar(void);
 
 static int random_lane_index(void);
 static double random_lane(int *outlane);
+
+
+static Rectangle defbox(flt_t x, flt_t y);
+static Rectangle box(flt_t x, flt_t y, flt_t w, flt_t h);
 static void draw_info(void);
 static void value_box(const char *title, int x, int y, int value);
 
@@ -100,6 +103,9 @@ static bool better_than_bestcar(const Car_t *car);
 
 void CAI_Init(void)
 {
+    s_bestbrain = &s_cars[0].brain;
+    s_arch = NNArch_Init(DEF_NN_ARCH_SIZE, DEF_NN_ARCH_LEVELS);
+
     pool_init(s_car_count);
     list_init();
 
@@ -114,7 +120,7 @@ void CAI_Init(void)
 
     s_font = LoadFont(DEF_FONT_FILE);
     GuiSetFont(s_font);
-    GuiSetStyle(DEFAULT, TEXT_SIZE, DEF_FONT_SIZE);
+    GuiSetStyle(DEFAULT, TEXT_SIZE, s_font_size);
 
 
     s_road = Road_Init(DEF_WIN_WIDTH / 2, 
@@ -124,14 +130,22 @@ void CAI_Init(void)
     );
 
 
-    CAI_ASSERT(s_road.numlanes > 1, "road must have more than 1 lane\n");
-    for (int i = 0; i < s_traffic_count; i++)
+    flt_t rely = TRAFFIC_TOP;
+    int traffic_per_lane = s_road.numlanes - 1;
+    memcpy(s_trafficlanes, 
+        (int[]){2, 1, 1, 0, 1, 2, 1, 0, 2, 1}, 
+        sizeof s_trafficlanes
+    );
+    for (int i = 0, occupied = 0; i < s_traffic_count; i++, occupied++)
     {
-        s_trafficlanes[i] = random_lane_index();
-        double rely = TRAFFIC_TOP - (int)(i / (s_road.numlanes - 1)) * TRAFFIC_NEXT;
+        if (occupied == traffic_per_lane)
+        {
+            rely -= TRAFFIC_TOP * traffic_per_lane/s_traffic_count;
+            occupied = 0;
+        }
         s_traffic[i] = default_traffic(&s_traffic[i], 
             s_trafficlanes[i], 
-            rely
+            rely * s_height
         );
     }
 
@@ -141,9 +155,8 @@ void CAI_Init(void)
             &s_cars[i],
             DEF_CAR_RECT(
                 DEF_WIN_WIDTH*0.5, BESTCAR_YPOS()), 
-            CAR_AI
+            CarData_Default(CAR_AI, &s_arch)
         );
-
     }
     s_bestcar = &s_cars[0];
 }
@@ -185,10 +198,21 @@ void CAI_Run(void)
         Road_Recenter(&s_road, s_width / 2, s_height);
     }
 
-    GuiSlider(DEF_VALUEBOX(s_width*0.8, s_height*0.8), "0%", "100%", &coefficient, 0, 1);
-    value_box("mutation:", s_width*0.8, s_height*0.85, coefficient * 100);
-    if (GuiButton(DEF_VALUEBOX(s_width*0.8, s_height*0.9), "Mutate"))
+    flt_t x = s_width * .8;
+    GuiSlider(box(x, s_height*.75, 5, DEF_VALUEBOX_HEIGHT), 
+        "similar", "different", &coefficient, 0, 1
+    );
+    value_box("", x, s_height*0.78, coefficient * 100);
+    if (GuiButton(
+        box(x, s_height*.81, (flt_t)sizeof("Mutate") / 2, DEF_VALUEBOX_HEIGHT), 
+        "Mutate"))
+    {
         reset(coefficient);
+    }
+    if (GuiButton(defbox(x, s_height*.84), "Save"))
+    {
+        save_bestcar();
+    }
 
 
     double traveled = update_cars(delta_time);
@@ -221,7 +245,10 @@ void CAI_Deinit(void)
     {
         Car_Deinit(&s_traffic[i]);
     }
+
     pool_deinit();
+    NNArch_Deinit(&s_arch);
+    NeuralNet_Deinit(s_bestbrain);
     Road_Deinit(&s_road);
     UnloadFont(s_font);
     CloseWindow();
@@ -237,24 +264,20 @@ void CAI_Deinit(void)
 
 static void pool_init(int elems)
 {
-#ifndef STATIC_LIST
     s_pool = MEM_ALLOC_ARRAY(elems, sizeof(s_pool[0]));
     s_stack = MEM_ALLOC_ARRAY(elems, sizeof(s_stack[0]));
-#endif /* STATIC_LIST */
     s_poolsize = elems;
 }
 
 
 static void pool_deinit(void)
 {
-#ifndef STATIC_LIST
     mem_free(s_pool);
     mem_free(s_stack);
 
     s_pool = NULL;
     s_poolsize = 0;
     s_stack = NULL;
-#endif /* STATIC_LIST */
 }
 
 
@@ -299,15 +322,15 @@ static void list_remove(CarList_t *last, CarList_t *node)
 
 
 
-static Car_t default_traffic(Car_t *traffic, int lane, int rely)
+static Car_t default_traffic(Car_t *traffic, int lane, int y)
 {
     *traffic = Car_Init(
         traffic,
         DEF_CAR_RECT(
             Road_CenterOfLane(s_road, lane), 
-            rely * DEF_WIN_HEIGHT
+            y
         ), 
-        CAR_DUMMY
+        CarData_Default(CAR_DUMMY, NULL)
     );
     traffic->speed = DEF_TRAFFIC_SPD;
     return *traffic;
@@ -317,7 +340,7 @@ static Car_t default_traffic(Car_t *traffic, int lane, int rely)
 static void respawn_traffic(int i, double spawn)
 {
     s_traffic[i].y = spawn;
-    s_traffic[i].x = random_lane(&s_trafficlanes[i]);
+    s_traffic[i].x = Road_CenterOfLane(s_road, s_trafficlanes[i]);
 }
 
 static void update_traffic(double traveled, double delta_time)
@@ -356,18 +379,13 @@ static double update_cars(double delta_time)
 {
     find_bestcar();
     double bestcar_moved = 0;
-    if (NULL != s_bestcar)
-    {
-        bestcar_moved = Car_UpdateYpos(s_bestcar, delta_time, 0);
-        Car_UpdateXpos(s_bestcar, delta_time, 0);
-        Car_UpdateSensor(s_bestcar, s_road, s_traffic, s_traffic_count);
-        s_bestcar->y += bestcar_moved;
-    }
+    bestcar_moved = Car_UpdateYpos(s_bestcar, delta_time, 0);
+    Car_UpdateXpos(s_bestcar, delta_time, 0);
+    Car_UpdateSensor(s_bestcar, s_road, s_traffic, s_traffic_count);
+    s_bestcar->y = BESTCAR_YPOS();
 
 
 
-    s_updated = 0;
-#ifdef LIST
     CarList_t *prev = NULL;
     CarList_t *node = s_head;
     while (NULL != node)
@@ -397,30 +415,8 @@ static double update_cars(double delta_time)
             prev = node;
         }
 
-        s_updated += 1;
         node = next;
     }
-#else
-    for (int i = 0; i < s_car_count; i++)
-    {
-        Car_UpdateXpos(&s_cars[i], delta_time, 0);
-        if (&s_cars[i] != s_bestcar)
-        {
-            Car_UpdateYpos(&s_cars[i], delta_time, bestcar_moved);
-        }
-
-
-        Car_UpdateSensor(&s_cars[i], s_road, s_traffic, s_traffic_count);
-        if (!s_cars[i].damaged)
-        {
-            Car_ApplyFriction(&s_cars[i], delta_time);
-            Car_UpdateSpeed(&s_cars[i], delta_time);
-            Car_UpdateControls(&s_cars[i]);
-            Car_CheckCollision(&s_cars[i], s_road, s_traffic, s_traffic_count);
-        }
-    }
-#endif /* LIST */
-
     return bestcar_moved;
 }
 
@@ -429,7 +425,6 @@ static double find_bestcar(void)
 {
     double move_by = 0;
     
-#ifdef LIST
     CarList_t *node = s_head;
     while (NULL != node)
     {
@@ -442,16 +437,6 @@ static double find_bestcar(void)
         
         node = node->next;
     }
-#else
-    for (int i = 0; i < s_car_count; i++)
-    {
-        if (better_than_bestcar(&s_cars[i])) 
-        {
-            move_by = s_cars[i].y - BESTCAR_YPOS();
-            s_bestcar = &s_cars[i];
-        }
-    }
-#endif /* LIST */
     return move_by;
 }
 
@@ -461,25 +446,40 @@ static void draw_cars(Color color)
     Color transparent = color;
     transparent.a = BYTE_PERCENTAGE(0.2);
 
-#ifdef LIST
     CarList_t *node = s_head;
     while (NULL != node)
     {
         Car_Draw(*node->car, transparent, false, false);
         node = node->next;
     }
-#else
-    for (int i = 0; i < s_car_count; i++)
-        Car_Draw(s_cars[i], transparent, false, false);
-#endif /* LIST */
 
     Car_Draw(*s_bestcar, color, true, true);
-    NeuralNet_Draw(s_bestcar->brain, (Rectangle){
-        .x = s_road.right + 10, 
-        .y = s_height*0.3, 
-        .width = s_width - s_road.right - 20,
-        .height = s_height*0.4f,
-    });
+    Color background = (Color){.r=37, .g=26, .b=9, .a=BYTE_PERCENTAGE(1)};
+    NeuralNet_Draw(
+        s_bestcar->brain, 
+        (Rectangle){
+            .x = s_road.right + 10, 
+            .y = s_height*0.3, 
+            .width = s_width - s_road.right - 20,
+            .height = s_height*0.4f,
+        },
+        background,
+        DEF_LEVEL_NODE_RADIUS
+    );
+    CAI_ASSERT(NULL != s_bestbrain, "draw cars");
+
+    flt_t w = (flt_t)(s_width - s_road.right) / 2;
+    NeuralNet_Draw(
+        *s_bestbrain,
+        (Rectangle){
+            .x = s_road.right + w/2,
+            .y = s_height*0.05,
+            .width = w,
+            .height = s_height*0.2,
+        },
+        background,
+        DEF_LEVEL_NODE_RADIUS / 2
+    );
 }
 
 
@@ -496,9 +496,20 @@ static void reset(double coefficient)
         s_cars[i].angle = 0;
         s_cars[i].speed = 10;
         s_cars[i].traveled = 0;
-        NeuralNet_Mutate(&s_cars[i].brain, s_bestcar->brain, i == 0 ? 0 : coefficient);
+
+        CAI_ASSERT(s_bestbrain != NULL, "bestbrain must not be null on reset");
+        if (&s_cars[i].brain == s_bestbrain)
+            s_bestcar = &s_cars[i];
+        else
+            NeuralNet_Mutate(&s_cars[i].brain, *s_bestbrain, i == 0 ? 0 : coefficient);
     }
-    s_bestcar = &s_cars[0];
+}
+
+
+
+static void save_bestcar(void)
+{
+    s_bestbrain = &s_bestcar->brain;
 }
 
 
@@ -518,14 +529,27 @@ static double random_lane(int *outlane)
 
 
 
+
+static Rectangle box(flt_t x, flt_t y, flt_t w, flt_t h)
+{
+    return (Rectangle){
+        .x = x, 
+        .y = y,
+        .width = w * s_font_size,
+        .height = h * s_font_size,
+    };
+}
+
+static Rectangle defbox(flt_t x, flt_t y)
+{
+    return box(x, y, DEF_VALUEBOX_WIDTH, DEF_VALUEBOX_HEIGHT);
+}
+
+
 static void value_box(const char *title, int x, int y, int val)
 {
     GuiValueBox(
-        (Rectangle){
-            .x = x, .y = y, 
-            .width = DEF_VALUEBOX_WIDTH, 
-            .height = DEF_VALUEBOX_HEIGHT
-        }, 
+        box(x, y, DEF_VALUEBOX_WIDTH, DEF_VALUEBOX_HEIGHT),
         title, &val, 0, val, false
     );
 }
@@ -533,48 +557,47 @@ static void value_box(const char *title, int x, int y, int val)
 
 static void draw_info(void)
 {
-    int x = 70, y = 50;
+#define NEXT_BOX() (y += (DEF_VALUEBOX_HEIGHT * s_font_size))
+    int x = s_font_size * 5, y = s_font_size * 3;
     value_box("fps:", x, y, GetFPS());
-    y += DEF_VALUEBOX_HEIGHT;
+    NEXT_BOX();
     value_box("mph:", x, y, s_bestcar->speed / 1.6);
 
-    y += DEF_VALUEBOX_HEIGHT;
+    NEXT_BOX();
     value_box("dist:", x, y, s_bestcar->traveled * (1.0 / DISTANCE_FACTOR));
 
-    y += DEF_VALUEBOX_HEIGHT;
+    NEXT_BOX();
     value_box("bestcar:", x, y, s_bestcar - &s_cars[0]);
 
-    y += DEF_VALUEBOX_HEIGHT;
-    value_box("updated:", x, y, s_updated);
-
-    y += DEF_VALUEBOX_HEIGHT;
+    NEXT_BOX();
     value_box("offset:", x, y, s_bestcar->sensor.readings[0].dist * 100);
+
+    NEXT_BOX();
+    value_box("live: ", x, y, s_sp - &s_stack[0]);
+    NEXT_BOX();
+    value_box("total:", x, y, s_car_count);
     
 
 #ifdef _DEBUG
 
-    y += DEF_VALUEBOX_HEIGHT;
+    NEXT_BOX();
     value_box("angle:", x, y, s_bestcar->angle);
 
-    y += DEF_VALUEBOX_HEIGHT;
+    NEXT_BOX();
     value_box("xpos:", x, y, s_bestcar->x);
 
-    y += DEF_VALUEBOX_HEIGHT;
+    NEXT_BOX();
     value_box("ypos:", x, y, s_bestcar->y);
 
-    y += DEF_VALUEBOX_HEIGHT;
+    NEXT_BOX();
     value_box("dmg: ", x, y, s_bestcar->damaged);
 
-    y += DEF_VALUEBOX_HEIGHT;
-    value_box("live: ", x + 30, y, s_sp - &s_stack[0]);
-    y += DEF_VALUEBOX_HEIGHT;
-    value_box("total:", x + 30, y, s_car_count);
 
 
     static char tmp[256] = { 0 };
     for (int i = 0; i < s_traffic_count; i++)
     {
-        y += DEF_VALUEBOX_HEIGHT;
+        NEXT_BOX();
         snprintf(tmp, sizeof tmp, "traffic %d: y:", i);
         value_box(tmp, x*2, y, s_traffic[i].y);
     }
@@ -583,14 +606,18 @@ static void draw_info(void)
 
 
 
+
+
+
+
 static bool is_killable(const Car_t *car)
 {
-    return car->speed < 0;
+    return car->speed < 0 || car->damaged || car->y > GET_KILL_THRESHOLD();
 }
 
 static bool better_than_bestcar(const Car_t *car)
 {
-    return car->y < s_bestcar->y;
+    return car->y < s_bestcar->y && car->traveled > s_bestcar->traveled;
 }
 
 

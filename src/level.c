@@ -34,7 +34,6 @@ Level_t Level_Init(usize_t input_count, usize_t output_count)
         .weights = MEM_ALLOC_ARRAY(
             input_count, sizeof(level.weights[0])
         ),
-        .node_radius = DEF_LEVEL_NODE_RADIUS,
     };
 
     fltarr_Reserve(&level.inputs, input_count);
@@ -104,7 +103,6 @@ Level_t Level_Copy(Level_t *dst, const Level_t src)
 
 bitarr_t Level_FeedInput(Level_t* level)
 {
-    bitarr_Reset(&level->outputs);
     for (usize_t i = 0; i < level->output_count; i++)
     {
         double sum = 0;
@@ -137,14 +135,15 @@ bitarr_t Level_FeedForward(Level_t *level, bitarr_t given_input)
 
 
 
-void Level_Draw(const Level_t level, Rectangle bound, bool draw_input)
+void Level_Draw(const Level_t level, Rectangle bound, flt_t node_radius, bool draw_input)
 {
     flt_t bufdist = 5;
     flt_t in_node_dist = bound.width / (level.inputs.count);
     flt_t out_node_dist = bound.width / (level.output_count);
-    flt_t radius = level.node_radius - 4;
-    flt_t outer_radius = level.node_radius;
-    flt_t line_thickness = 3;
+    flt_t radius = node_radius - 4;
+
+    flt_t line_thickness = 2;
+
     Vector2 out = {
         .x = bound.x + radius + bufdist, 
         .y = bound.y + radius + bufdist
@@ -153,7 +152,7 @@ void Level_Draw(const Level_t level, Rectangle bound, bool draw_input)
         .x = bound.x + radius + bufdist, 
         .y = bound.y + bound.height - radius - bufdist
     };
-    Color outer_color = DARKGRAY;
+
     Color positive_color = GREEN;
     Color negative_color = RED;
 
@@ -172,32 +171,34 @@ void Level_Draw(const Level_t level, Rectangle bound, bool draw_input)
             }
             color.a = BYTE_PERCENTAGE(activation);
 
-            DrawCircleV(center, outer_radius, outer_color);
             DrawCircleV(center, radius, color);
             center.x += in_node_dist;
         }
     }
 
+    /* draw the outputs */
     center.x = out.x;
     center.y = out.y;
     for (usize_t i = 0; i < level.output_count; i++)
     {
         usize_t val = bitarr_Get(level.outputs, i);
         Color color = val ? positive_color : negative_color;
-        DrawCircleV(center, outer_radius, outer_color);
         DrawCircleV(center, radius, color);
         center.x += out_node_dist;
     }
 
 
+    /* draw the lines */
     flt_t in_xstart = in.x;
-    for (usize_t i = 0; i < level.output_count; i++)
+    for (usize_t i = 0; i < level.output_count; i++, 
+        out.x += out_node_dist, in.x = in_xstart)
     {
         in.x = in_xstart;
-        for (usize_t k = 0; k < level.inputs.count; k++)
+        for (usize_t k = 0; k < level.inputs.count; k++, 
+            in.x += in_node_dist)
         {
             Color weight = positive_color;
-            flt_t scalar = level.weights[i].at[k];
+            flt_t scalar = level.weights[k].at[i];
             if (scalar < 0)
             {
                 weight = negative_color;
@@ -206,9 +207,7 @@ void Level_Draw(const Level_t level, Rectangle bound, bool draw_input)
             weight.a = BYTE_PERCENTAGE(scalar);
 
             DrawLineEx(out, in, line_thickness, weight);
-            in.x += in_node_dist;
         }
-        out.x += out_node_dist;
     }
 }
 
@@ -225,7 +224,7 @@ static void randomize(Level_t *level)
 {
     for (usize_t i = 0; i < level->inputs.count; i++)
     {
-        for (usize_t j = 0; j < level->output_count; j++)
+        for (usize_t j = 0; j < level->weights[i].count; j++)
         {
             level->weights[i].at[j] = utils_randflt(-1, 1);
         }

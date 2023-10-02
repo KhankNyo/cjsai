@@ -7,17 +7,15 @@
 
 
 #define DEF_FONT_FILE "resources/font/cascadia.ttf"
-#define DEF_FONT_SIZE 16
+#define DEF_FONT_SIZE 20
 
 #define DEF_WIN_WIDTH 1080
 #define DEF_WIN_HEIGHT 720
 
 
-#define DEF_VALUEBOX_HEIGHT 20 
-#define DEF_VALUEBOX_WIDTH 50
-#define DEF_VALUEBOX(argx, argy) (Rectangle){\
-    .x = argx, .y = argy,\
-    .width = DEF_VALUEBOX_WIDTH, .height = DEF_VALUEBOX_HEIGHT}
+
+#define DEF_VALUEBOX_WIDTH 3
+#define DEF_VALUEBOX_HEIGHT 1
 
 #define DEF_ROAD_WIDTH ((double)DEF_WIN_WIDTH / 4)
 #define DEF_ROAD_DASHLEN 30
@@ -44,8 +42,8 @@
 #define DEF_CAR_ANGLETURN 180.0f
 #define DEF_CAR_ACCEL 25.0f
 #define DEF_CAR_DECEL (DEF_CAR_ACCEL * 3)
-#define DEF_CAR_REVERSESPD 0.0f
-#define DEF_CAR_TOPSPD (70*1.6)
+#define DEF_CAR_MAX_REVERSE 20.0f
+#define DEF_CAR_MAX_SPEED (70*1.6)
 
 #define DEF_CAR_COLOR DARKBLUE
 
@@ -59,18 +57,16 @@
 
 
 
-#define DEF_SENSOR_RAYLEN (200.0f)
-#define DEF_SENSOR_RAYSPREAD (90)
+#define DEF_SENSOR_RAYLEN (250.0f)
+#define DEF_SENSOR_RAYSPREAD (60)
 #define DEF_SENSOR_COLORTOUCHED BLACK
 #define DEF_SENSOR_COLORNORMAL YELLOW
 #define DEF_SENSOR_RAYCOUNT 7
 
 
-#define DEF_NN_SIZE 2
-#define DEF_NN_ARCHITECTURE \
-    (NNArch_t){\
-        .levels = (usize_t[DEF_NN_SIZE]){DEF_SENSOR_RAYCOUNT, 4},\
-        .count = DEF_NN_SIZE}
+#define DEF_NN_ARCH_SIZE 2
+#define DEF_NN_ARCH_LEVELS (usize_t[DEF_NN_ARCH_SIZE]){DEF_SENSOR_RAYCOUNT, 4}
+#define DEF_KILL_THRESHOLD TRAFFIC_BOTTOM
 
 #define DEF_LEVEL_NODE_RADIUS 20.f
 

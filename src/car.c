@@ -15,6 +15,11 @@
 
 static void setup_inputs(Car_t *car);
 
+
+
+
+
+
 Car_t Car_Init(Car_t *car, Rectangle shape, const CarData_t data)
 {
     CAI_ASSERT(car != NULL, "Car_Init does not accept NULL");
@@ -35,10 +40,9 @@ Car_t Car_Init(Car_t *car, Rectangle shape, const CarData_t data)
         .data = data,
     };
 
-    if (data.arch != NULL && data.type == CAR_AI)
+    if (data.type == CAR_AI && data.arch != NULL)
     {
         car->brain = NeuralNet_Init(*data.arch);
-        car->data.arch = NULL;
     }
     return *car;
 }
@@ -59,13 +63,13 @@ void Car_Deinit(Car_t *car)
 
 double Car_ApplyFriction(Car_t *car, double delta_time)
 {
-    return car->speed -= car->speed * car->friction * delta_time;
+    return car->speed -= car->speed * car->data.friction * delta_time;
 }
 
 
 void Car_UpdateControls(Car_t *car)
 {
-    switch (car->type)
+    switch (car->data.type)
     {
     case CAR_DUMMY: return;
     case CAR_HUMAN: Control_QueryInputs(&car->direction); break;
@@ -92,7 +96,7 @@ void Car_UpdateSpeed(Car_t* car, double delta_time)
 
     /* turning */
     double angle = DEF_CAR_ANGLETURN * delta_time;
-    if (flt_inrange_inclusive(100, car->speed, car->topspeed))
+    if (flt_inrange_inclusive(100, car->speed, car->data.max_speed))
         angle /= car->speed * 0.04;
     else if (flt_inrange(30, car->speed, 100))
         angle /= car->speed * 0.06;
@@ -114,14 +118,15 @@ void Car_UpdateSpeed(Car_t* car, double delta_time)
         car->angle += angle;
         Car_ApplyFriction(car, delta_time);
     }
-    if (car->speed < car->topspeed && car->direction.forward)
+    if (car->speed < car->data.max_speed && car->direction.forward)
     {
-        double rate = car->speed >= 0 ? DEF_CAR_ACCEL : DEF_CAR_DECEL;
+        double rate = car->speed >= 0 
+            ? car->data.accel : car->data.decel;
         car->speed += rate * delta_time;
     }
-    if (car->speed > car->max_reverse_spd && car->direction.reverse)
+    if (car->speed > car->data.max_reverse && car->direction.reverse)
     {
-        car->speed -= DEF_CAR_DECEL * delta_time;
+        car->speed -= car->data.decel * delta_time;
     }
 }
 
@@ -145,11 +150,11 @@ void Car_UpdateSensor(Car_t* car, const Road_t road, const Car_t* traffic, usize
 
 bool Car_CheckCollision(Car_t *car, const Road_t road, const Car_t *traffic, int traffic_count)
 {
-    Line_t* carpoly = MEM_ALLOCA_ARRAY(car->poly_count, sizeof(Line_t));
-    Line_t* trafficpoly = MEM_ALLOCA_ARRAY(car->poly_count, sizeof(Line_t));
+    Line_t* carpoly = MEM_ALLOCA_ARRAY(car->data.poly_count, sizeof(Line_t));
+    Line_t* trafficpoly = MEM_ALLOCA_ARRAY(car->data.poly_count, sizeof(Line_t));
     Car_GetPolygons(*car, carpoly);
 
-    for (int i = 0; i < car->poly_count; i++)
+    for (int i = 0; i < car->data.poly_count; i++)
     {
         if ((carpoly[i].end.x < road.left || carpoly[i].start.x < road.left)
         || (carpoly[i].end.x > road.right || carpoly[i].start.x > road.right))
@@ -162,13 +167,13 @@ bool Car_CheckCollision(Car_t *car, const Road_t road, const Car_t *traffic, int
 
     for (int i = 0; i < traffic_count; i++)
     {
-        CAI_ASSERT(car->poly_count == traffic[0].poly_count, 
+        CAI_ASSERT(car->data.poly_count == traffic[0].data.poly_count, 
             "Focused car and AI should have the same poly count."
         );
         Car_GetPolygons(traffic[i], trafficpoly);
         if (Line_PolyCollide(
-            carpoly, car->poly_count, 
-            trafficpoly, traffic[i].poly_count))
+            carpoly, car->data.poly_count, 
+            trafficpoly, traffic[i].data.poly_count))
         {
             goto damaged;
         }
@@ -204,8 +209,8 @@ double Car_UpdateYpos(Car_t *car, double delta_time, double y_offset)
 
 void Car_GetPolygons(const Car_t car, Line_t *out_polygons)
 {
-    CAI_ASSERT(car.poly_count == DEF_CAR_POLYCOUNT, 
-        "can't handle %d polygons\n", car.poly_count
+    CAI_ASSERT(car.data.poly_count == DEF_CAR_POLYCOUNT, 
+        "can't handle %d polygons\n", car.data.poly_count
     );
     const flt_t x = car.x, 
           y = car.y, 
@@ -217,7 +222,7 @@ void Car_GetPolygons(const Car_t car, Line_t *out_polygons)
     out_polygons[3] = Line_From(x + w/2,   y - l/2, 0, l); /* right */
 
     Vector2 center = {.x = x, .y = y};
-    for (int i = 0; i < car.poly_count; i++)
+    for (int i = 0; i < car.data.poly_count; i++)
     {
         out_polygons[i] = Line_Rotate(out_polygons[i], 
             center, 
@@ -248,9 +253,9 @@ void Car_Draw(const Car_t car, Color color, bool draw_sensors, bool draw_collide
 
     if (draw_collidebox)
     {
-        Line_t *lines = MEM_ALLOCA_ARRAY(car.poly_count, sizeof(*lines));
+        Line_t *lines = MEM_ALLOCA_ARRAY(car.data.poly_count, sizeof(*lines));
         Car_GetPolygons(car, lines);
-        for (int i = 0; i < car.poly_count; i++)
+        for (int i = 0; i < car.data.poly_count; i++)
         {
             DrawLineV(lines[i].start, lines[i].end, GREEN);
         }
@@ -271,10 +276,7 @@ void Car_Draw(const Car_t car, Color color, bool draw_sensors, bool draw_collide
 static void setup_inputs(Car_t *car)
 {
     fltarr_t *input = &car->brain.levels[0].inputs;
-    CAI_ASSERT(input->count == DEF_NN_ARCHITECTURE[0], 
-        "%zu != %zu\n", input->count, DEF_NN_ARCHITECTURE[0]
-    );
-    for (usize_t i = 0; i < car->sensor.ray_count; i++)
+    for (usize_t i = 0; i < input->count; i++)
     {
         input->at[i] =  car->sensor.readings[i].dist;
     }

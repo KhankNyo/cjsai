@@ -23,24 +23,6 @@ flt_t utils_randflt(flt_t lower_bound, flt_t upper_bound);
 flt_t f32lerp(flt_t start, flt_t end, flt_t percentage);
 
 
-typedef struct Line_t
-{
-    Vector2 start, end;
-} Line_t;
-typedef struct Reading_t
-{
-    Vector2 at;
-    flt_t dist;
-} Reading_t;
-
-/* returns NULL if a & b does not intersect, else return the pointer given */
-Reading_t *Line_Intersect(Reading_t *at, const Line_t a, const Line_t b);
-Line_t Line_From(flt_t x, flt_t y, flt_t offset_w, flt_t offset_h);
-Line_t Line_Scale(Line_t line, double scale);
-Line_t Line_Rotate(Line_t line, Vector2 origin, double rad);
-bool Line_PolyCollide(Line_t* poly1, usize_t count1, Line_t* poly2, usize_t count2);
-
-
 typedef struct fltarr_t
 {
     flt_t *at;
@@ -81,11 +63,16 @@ static inline unsigned bitarr_Get(bitarr_t bitarray, unsigned index)
 static inline unsigned bitarr_Set(bitarr_t *bitarray, unsigned index, unsigned value)
 {
     CAI_ASSERT(index < BITARR_COUNT, "invalid input");
+    unsigned i = index % BITS_IN_WORD;
+    unsigned slot = index / BITS_IN_WORD;
 
     value = value != 0; /* ensure that value is 1 or 0 */
-    uintptr_t prev = bitarray->bits[index / BITS_IN_WORD]; /* get previous bit for return */
-    bitarray->bits[index / BITS_IN_WORD] |= (value << (index % BITS_IN_WORD)); /* set the bit */
-    return (prev >> (index % BITS_IN_WORD)) & 1;
+    value <<= i;
+    uintptr_t prev = bitarray->bits[slot]; /* get previous bit for return */
+    uintptr_t unset = prev & ~(1 << i);
+
+    bitarray->bits[slot] = (unset | value); /* set the bit */
+    return (prev >> i) & 1;
 }
 
 

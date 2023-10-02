@@ -10,12 +10,17 @@ typedef struct NNArch_t
 {
     usize_t *levels;
     usize_t count;
+    usize_t capacity;
 } NNArch_t;
 
 
+/* levels will be deep copied */
 NNArch_t NNArch_Init(usize_t count, usize_t *levels);
-NNArch_t NNArch_Change(NNArch_t *arch, usize_t count, usize_t *levels);
 void NNArch_Deinit(NNArch_t *arch);
+
+/* returns true if arch->level was reallocated */
+bool NNArch_Change(NNArch_t *arch, usize_t count, usize_t *levels);
+
 
 
 
@@ -51,7 +56,7 @@ bitarr_t NeuralNet_FeedForward(NeuralNet_t *nn);
 void NeuralNet_Mutate(NeuralNet_t *dst, const NeuralNet_t src, double similarity);
 
 
-void NeuralNet_Draw(const NeuralNet_t nn, Rectangle container);
+void NeuralNet_Draw(const NeuralNet_t nn, Rectangle container, Color background, flt_t node_radius);
 
 
 

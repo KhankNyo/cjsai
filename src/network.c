@@ -1,5 +1,5 @@
 
-#include <string.h> /* memset */
+#include <string.h> /* memset, memcpy */
 #include <raylib.h>
 
 #include "include/network.h"
@@ -15,17 +15,38 @@
 
 NNArch_t NNArch_Init(usize_t count, usize_t *levels)
 {
-}
-
-
-NNArch_t NNArch_Change(NNArch_t *arch, usize_t count, usize_t *levels)
-{
+    NNArch_t arch = {
+        .levels = MEM_ALLOC_ARRAY(count, sizeof(*levels)),
+        .count = count,
+        .capacity = count,
+    };
+    memcpy(arch.levels, levels, count * sizeof(*levels));
+    return arch;
 }
 
 
 void NNArch_Deinit(NNArch_t *arch)
 {
+    MEM_FREE_ARRAY(arch->levels);
+    memset(arch, 0, sizeof(*arch));
 }
+
+
+bool NNArch_Change(NNArch_t *arch, usize_t count, usize_t *levels)
+{
+    if (arch->capacity < count)
+    {
+        NNArch_Deinit(arch);
+        *arch = NNArch_Init(count, levels);
+        return true;
+    }
+
+    arch->count = count;
+    memcpy(arch->levels, levels, count * sizeof(*levels));
+    return false;
+}
+
+
 
 
 
@@ -95,7 +116,7 @@ bitarr_t NeuralNet_FeedForward(NeuralNet_t *nn)
 }
 
 
-void NeuralNet_Mutate(NeuralNet_t *nn, const NeuralNet_t src, double similarity)
+void NeuralNet_Mutate(NeuralNet_t *nn, const NeuralNet_t src, flt_t similarity)
 {
     NeuralNet_Copy(nn, src);
 
@@ -128,16 +149,17 @@ void NeuralNet_Mutate(NeuralNet_t *nn, const NeuralNet_t src, double similarity)
 
 
 
-void NeuralNet_Draw(const NeuralNet_t nn, Rectangle container)
+void NeuralNet_Draw(const NeuralNet_t nn, Rectangle container, Color background, flt_t node_radius)
 {
-    DrawRectangleRec(container, BLACK);
+    DrawRectangleRec(container, background);
 
-    double level_height = container.height / nn.count;
+    flt_t level_height = container.height / nn.count;
+    container.y += level_height * (nn.count - 1);
     container.height = level_height;
     for (usize_t i = 0; i < nn.count; i++)
     {
-        Level_Draw(nn.levels[i], container, 0 == i);
-        container.y -= level_height;
+        Level_Draw(nn.levels[i], container, node_radius, 0 == i);
+        container.y -= level_height - node_radius*2;
     }
 }
 

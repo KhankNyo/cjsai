@@ -134,32 +134,33 @@ static Reading_t get_shortest_reading(
      * because the ray is casted from the car's center 
      * so if it is zero, we're not touching anything */
 
-    /* check for usize_tersection with road border */
-    {
-        Line_Intersect(&touch, ray, Road_RightBorder(road));
+    /* check for intersection with road border */
+    Line_Intersect(&touch, ray, Road_RightBorder(road));
 
-        last = touch;
-        if (Line_Intersect(&touch, ray, Road_LeftBorder(road)) 
-        && 0 != last.dist 
-        && last.dist < touch.dist)
-        {
-            touch = last;
-        }
+    last = touch;
+    if (Line_Intersect(&touch, ray, Road_LeftBorder(road)) 
+    && 0 != last.dist 
+    && last.dist < touch.dist)
+    {
+        touch = last;
     }
     
 
 
 
-    /* check for usize_tersection with cars */
+    /* check for intersection with cars */
+    Line_t *polygons = MEM_ALLOCA_ARRAY(cars[0].data.poly_count, sizeof(*polygons));
     for (usize_t i = 0; i < car_count; i++)
     {
         if (&cars[i] == current)
             continue;
 
-        Line_t *polygons = MEM_ALLOCA_ARRAY(cars[i].poly_count, sizeof(*polygons));
+        CAI_ASSERT(cars[i].data.poly_count == cars[0].data.poly_count,
+            "all cars must have the same poly count"
+        );
         Car_GetPolygons(cars[i], polygons);
         /* iterate through the car's polygons */
-        for (int j = 0; j < cars[i].poly_count; j++) /* fuck i and j */
+        for (int j = 0; j < cars[i].data.poly_count; j++) /* fuck i and j */
         {
             last = touch;
             if (Line_Intersect(&touch, ray, polygons[j]) 
