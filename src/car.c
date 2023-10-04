@@ -150,32 +150,37 @@ void Car_UpdateSensor(Car_t* car, const Road_t road, const Car_t* traffic, usize
 
 bool Car_CheckCollision(Car_t *car, const Road_t road, const Car_t *traffic, int traffic_count)
 {
-    Line_t* carpoly = MEM_ALLOCA_ARRAY(car->data.poly_count, sizeof(Line_t));
-    Line_t* trafficpoly = MEM_ALLOCA_ARRAY(car->data.poly_count, sizeof(Line_t));
-    Car_GetPolygons(*car, carpoly);
+    Vector2 *car_points = MEM_ALLOCA_ARRAY(
+        car->data.poly_count, sizeof(*car_points)
+    );
+    Polygon_t car_poly = Polygon_Init(car->data.poly_count, car_points);
+    Car_GetPolygon(*car, &car_poly);
 
-    for (int i = 0; i < car->data.poly_count; i++)
+
+    /* outside of the road is considered damaged */
+    if (!Polygon_InsideRect(car_poly, road.poly))
     {
-        if ((carpoly[i].end.x < road.left || carpoly[i].start.x < road.left)
-        || (carpoly[i].end.x > road.right || carpoly[i].start.x > road.right))
-        {
-            goto damaged;
-        }
-
+        goto damaged;
     }
 
 
-    for (int i = 0; i < traffic_count; i++)
+    if (traffic_count > 0)
     {
-        CAI_ASSERT(car->data.poly_count == traffic[0].data.poly_count, 
-            "Focused car and AI should have the same poly count."
+        Vector2 *traffic_points = MEM_ALLOCA_ARRAY(
+            traffic[0].data.poly_count, sizeof(*traffic_points)
         );
-        Car_GetPolygons(traffic[i], trafficpoly);
-        if (Line_PolyCollide(
-            carpoly, car->data.poly_count, 
-            trafficpoly, traffic[i].data.poly_count))
+        Polygon_t traffic_poly = Polygon_Init(traffic[0].data.poly_count, traffic_points);
+
+        for (int i = 0; i < traffic_count; i++)
         {
-            goto damaged;
+            CAI_ASSERT(car->data.poly_count == traffic[i].data.poly_count, 
+                "car and traffic should have the same poly count."
+            );
+            Car_GetPolygon(traffic[i], &traffic_poly);
+            if (Polygon_TouchedRect(car_poly, traffic_poly))
+            {
+                goto damaged;
+            }
         }
     }
 
@@ -207,27 +212,32 @@ double Car_UpdateYpos(Car_t *car, double delta_time, double y_offset)
 }
 
 
-void Car_GetPolygons(const Car_t car, Line_t *out_polygons)
+void Car_GetPolygon(const Car_t car, Polygon_t *out_polygons)
 {
-    CAI_ASSERT(car.data.poly_count == DEF_CAR_POLYCOUNT, 
-        "can't handle %d polygons\n", car.data.poly_count
+    Polygon_RectFrom(out_polygons,
+        (Vector2){.x = car.x, .y = car.y},
+        car.width, car.len, DEG_TO_RAD(car.angle)
     );
-    const flt_t x = car.x, 
-          y = car.y, 
-          w = car.width, 
-          l = car.len;
-    out_polygons[0] = Line_From(x - w/2,   y + l/2, w, 0); /* top */
-    out_polygons[1] = Line_From(x - w/2,   y - l/2, w, 0); /* bottom */
-    out_polygons[2] = Line_From(x - w/2,   y - l/2, 0, l); /* left */
-    out_polygons[3] = Line_From(x + w/2,   y - l/2, 0, l); /* right */
+}
 
-    Vector2 center = {.x = x, .y = y};
-    for (int i = 0; i < car.data.poly_count; i++)
+
+void Car_GetPolygonLines(const Car_t car, Line_t *out_lines)
+{
+    CAI_ASSERT(car.data.poly_count == DEF_CAR_POLYCOUNT,
+        "can't hangle %d polygons in GetPolygonLines",
+        car.data.poly_count
+    );
+
+    Vector2 vec[4];
+    Polygon_t poly = Polygon_Init(car.data.poly_count, vec);
+    Car_GetPolygon(car, &poly);
+
+    for (int i = 0; i < 4; i++)
     {
-        out_polygons[i] = Line_Rotate(out_polygons[i], 
-            center, 
-            DEG_TO_RAD(car.angle)
-        );
+        out_lines[i].start = vec[i];
+        out_lines[i].end = (i == 3) 
+            ? vec[0] 
+            : vec[i + 1];
     }
 }
 
@@ -239,10 +249,10 @@ void Car_GetPolygons(const Car_t car, Line_t *out_polygons)
 
 void Car_Draw(const Car_t car, Color color, bool draw_sensors, bool draw_collidebox)
 {
-    const double x = car.x;
-    const double y = car.y;
-    const double w = car.width;
-    const double l = car.len;
+    const flt_t x = car.x;
+    const flt_t y = car.y;
+    const flt_t w = car.width;
+    const flt_t l = car.len;
 
     rlPushMatrix();
     rlTranslatef(x, y, 0);
@@ -253,11 +263,17 @@ void Car_Draw(const Car_t car, Color color, bool draw_sensors, bool draw_collide
 
     if (draw_collidebox)
     {
-        Line_t *lines = MEM_ALLOCA_ARRAY(car.data.poly_count, sizeof(*lines));
-        Car_GetPolygons(car, lines);
+        Vector2 *lines = MEM_ALLOCA_ARRAY(car.data.poly_count, sizeof(*lines));
+        Polygon_t collidebox = Polygon_Init(car.data.poly_count, lines);
+        Car_GetPolygon(car, &collidebox);
+
         for (int i = 0; i < car.data.poly_count; i++)
         {
-            DrawLineV(lines[i].start, lines[i].end, GREEN);
+            Vector2 start = collidebox.points[i];
+            Vector2 end = (i == car.data.poly_count - 1)
+                ? collidebox.points[0]
+                : collidebox.points[i + 1];
+            DrawLineV(start, end, GREEN);
         }
     }
     if (draw_sensors)

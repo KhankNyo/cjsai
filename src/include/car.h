@@ -6,6 +6,7 @@
 #include "common.h"
 #include "network.h"
 #include "sensor.h"
+#include "line.h"
 
 typedef enum ControlType_t 
 {
@@ -88,8 +89,11 @@ flt_t Car_UpdateXpos(Car_t *car, flt_t delta_time, flt_t x_offset);
 void Car_UpdateSensor(Car_t* car, const Road_t road, const Car_t* traffic, usize_t traffic_count);
 bool Car_CheckCollision(Car_t *car, const Road_t road, const Car_t *traffic, int traffic_count);
 
-/* out_polygons must be able to contain car.poly_count elems */
-void Car_GetPolygons(const Car_t car, Line_t *out_polygons);
+/* out_polygons->points must be able to contain car.poly_count vectors */
+void Car_GetPolygon(const Car_t car, Polygon_t *out_polygons);
+
+/* out_lines must be able to contain car.poly_count lines */
+void Car_GetPolygonLines(const Car_t car, Line_t *out_lines);
 
 
 

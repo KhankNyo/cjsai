@@ -158,7 +158,7 @@ static Reading_t get_shortest_reading(
         CAI_ASSERT(cars[i].data.poly_count == cars[0].data.poly_count,
             "all cars must have the same poly count"
         );
-        Car_GetPolygons(cars[i], polygons);
+        Car_GetPolygonLines(cars[i], polygons);
         /* iterate through the car's polygons */
         for (int j = 0; j < cars[i].data.poly_count; j++) /* fuck i and j */
         {

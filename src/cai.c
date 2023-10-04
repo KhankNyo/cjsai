@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h> /* strlen */
 #include <time.h>
+#include <stdio.h>
 
 #include "include/common.h"
 #include "include/config.h"
@@ -123,7 +124,8 @@ void CAI_Init(void)
     GuiSetStyle(DEFAULT, TEXT_SIZE, s_font_size);
 
 
-    s_road = Road_Init(DEF_WIN_WIDTH / 2, 
+    Road_Init(&s_road, 
+        (flt_t)DEF_WIN_WIDTH / 2, 
         DEF_ROAD_WIDTH, 
         DEF_WIN_HEIGHT,
         DEF_ROAD_LANES
@@ -195,7 +197,7 @@ void CAI_Run(void)
         {
             Car_Reposition(&s_traffic[i], xscale, yscale);
         }
-        Road_Recenter(&s_road, s_width / 2, s_height);
+        Road_Recenter(&s_road, s_width, s_height);
     }
 
     flt_t x = s_width * .8;
@@ -453,14 +455,18 @@ static void draw_cars(Color color)
         node = node->next;
     }
 
+
     Car_Draw(*s_bestcar, color, true, true);
     Color background = (Color){.r=37, .g=26, .b=9, .a=BYTE_PERCENTAGE(1)};
+
+
+    int road_right = s_road.points[2].x;
     NeuralNet_Draw(
         s_bestcar->brain, 
         (Rectangle){
-            .x = s_road.right + 10, 
+            .x = road_right + 10, 
             .y = s_height*0.3, 
-            .width = s_width - s_road.right - 20,
+            .width = s_width - road_right - 20,
             .height = s_height*0.4f,
         },
         background,
@@ -468,11 +474,11 @@ static void draw_cars(Color color)
     );
     CAI_ASSERT(NULL != s_bestbrain, "draw cars");
 
-    flt_t w = (flt_t)(s_width - s_road.right) / 2;
+    flt_t w = (flt_t)(s_width - road_right) / 2;
     NeuralNet_Draw(
         *s_bestbrain,
         (Rectangle){
-            .x = s_road.right + w/2,
+            .x = road_right + w/2,
             .y = s_height*0.05,
             .width = w,
             .height = s_height*0.2,

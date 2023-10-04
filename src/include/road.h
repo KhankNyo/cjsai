@@ -5,6 +5,7 @@
 
 #include <raylib.h>
 
+#include "line.h"
 #include "common.h"
 #include "utils.h"
 
@@ -12,19 +13,21 @@
 
 typedef struct Road_t
 {
-    int left, right;
-    int width, height;
     int lane_width;
     int numlanes;
     int dash_len, dash_width;
     Color dash_color, color;
+
+    flt_t width, height;
+    Vector2 points[4];
+    Polygon_t poly;
 } Road_t;
 
-Road_t Road_Init(int center, int width, int height, int numlanes);
+Road_t Road_Init(Road_t *road, flt_t center, flt_t width, flt_t height, int numlanes);
 void Road_Deinit(Road_t *road);
 
 
-void Road_Recenter(Road_t *road, int center, int height);
+void Road_Recenter(Road_t *road, flt_t topleft_x, flt_t topleft_y);
 double Road_GetCenter(const Road_t road);
 
 Line_t Road_RightBorder(const Road_t road);
