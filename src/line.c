@@ -168,10 +168,6 @@ void Polygon_RectFrom(Polygon_t *p, Vector2 center, flt_t w, flt_t h, flt_t angl
     flt_t c = cos(angle), s = sin(angle);
     flt_t x = center.x - w/2, y = center.y - h/2;
 
-    p->points[0] = (Vector2){.x = x, .y = y};
-    p->points[1] = (Vector2){.x = x, .y = y + h};
-    p->points[2] = (Vector2){.x = x + w, .y = y + h};
-    p->points[3] = (Vector2){.x = x + w, .y = y};
 
 #ifdef CAI_AVX2
 #define GETBIT(num, bitcnt) ((num) & ((1 << bitcnt) - 1))
@@ -185,8 +181,8 @@ void Polygon_RectFrom(Polygon_t *p, Vector2 center, flt_t w, flt_t h, flt_t angl
     | (GETBIT(_b, 3) << 4))
 
     __m256 _pts = _mm256_set_ps(
-        p->points[3].y, p->points[2].y, p->points[1].y, p->points[0].y,
-        p->points[3].x, p->points[2].x, p->points[1].x, p->points[0].x
+        y, y + h, y + h, y,
+        x + w, x + w, x, x
     );
     __m256 _center = _mm256_set_ps(
         center.y, center.y, center.y, center.y,
@@ -239,6 +235,10 @@ void Polygon_RectFrom(Polygon_t *p, Vector2 center, flt_t w, flt_t h, flt_t angl
 
 
 #else
+    p->points[0] = (Vector2){.x = x, .y = y};
+    p->points[1] = (Vector2){.x = x, .y = y + h};
+    p->points[2] = (Vector2){.x = x + w, .y = y + h};
+    p->points[3] = (Vector2){.x = x + w, .y = y};
     for (int i = 0; i < 4; i++)
     {
         p->points[i] = vec_rot(p->points[i], center, c, s);
