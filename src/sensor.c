@@ -46,14 +46,29 @@ void Sensor_Update(
 )
 {
     cast_rays(sensor);
-    for (usize_t i = 0; i < sensor->ray_count; i++)
+    if (sensor->ray_count == DEF_SENSOR_RAYCOUNT)
     {
-        sensor->readings[i] = get_shortest_reading(
-            sensor->car,
-            sensor->rays[i], 
-            road,
-            cars, car_count
-        );
+        for (usize_t i = 0; i < DEF_SENSOR_RAYCOUNT; i++)
+        {
+            sensor->readings[i] = get_shortest_reading(
+                sensor->car,
+                sensor->rays[i],
+                road,
+                cars, car_count
+            );
+        }
+    }
+    else
+    {
+        for (usize_t i = 0; i < sensor->ray_count; i++)
+        {
+            sensor->readings[i] = get_shortest_reading(
+                sensor->car,
+                sensor->rays[i],
+                road,
+                cars, car_count
+            );
+        }
     }
 }
 

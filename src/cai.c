@@ -32,7 +32,7 @@ static int s_traffic_count = DEF_TRAFFIC_COUNT;
 
 
 static NNArch_t s_arch = {0};
-static Car_t s_cars[15000] = { 0 };
+static Car_t s_cars[20000] = { 0 };
 static Color s_car_color;
 static int s_car_count = STATIC_ARRSIZE(s_cars);
 

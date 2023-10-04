@@ -3,6 +3,8 @@
 #include "include/utils.h"
 #include "include/line.h"
 
+#include <immintrin.h>
+
 
 
 
@@ -170,10 +172,78 @@ void Polygon_RectFrom(Polygon_t *p, Vector2 center, flt_t w, flt_t h, flt_t angl
     p->points[1] = (Vector2){.x = x, .y = y + h};
     p->points[2] = (Vector2){.x = x + w, .y = y + h};
     p->points[3] = (Vector2){.x = x + w, .y = y};
+
+#ifdef CAI_AVX2
+#define GETBIT(num, bitcnt) ((num) & ((1 << bitcnt) - 1))
+#define SEL4(_a,_b,_c,_d)\
+    (GETBIT(_a, 2) \
+    | (GETBIT(_b, 2) << 2) \
+    | (GETBIT(_c, 2) << 4) \
+    | (GETBIT(_d, 2) << 6))
+#define SEL2(_a, _b)\
+    (GETBIT(_a, 3) \
+    | (GETBIT(_b, 3) << 4))
+
+    __m256 _pts = _mm256_set_ps(
+        p->points[3].y, p->points[2].y, p->points[1].y, p->points[0].y,
+        p->points[3].x, p->points[2].x, p->points[1].x, p->points[0].x
+    );
+    __m256 _center = _mm256_set_ps(
+        center.y, center.y, center.y, center.y,
+        center.x, center.x, center.x, center.x
+    );
+    /* [dx0, dx1, dx2, dx3, dy0, dy1, dy2, dy3] */
+    __m256 _diff = _mm256_sub_ps(_pts, _center);
+    __m256 _cs = _mm256_set_ps(
+        s, s, s, s,
+        c, c, c, c
+    );
+    __m256 _nsc = _mm256_set_ps(
+        c, c, c, c,
+        -s, -s, -s, -s
+    );
+
+
+
+
+    /* [dx0, dx1, dx2, dx3, dx0, dx1, dx2, dx3] */
+    __m256 _dx = _mm256_permute2f128_ps(_diff, _diff, SEL2(0, 0));
+    /* [dy0, dy1, dy2, dy3, dy0, dy1, dy2, dy3] */
+    __m256 _dy = _mm256_permute2f128_ps(_diff, _diff, SEL2(1, 1));
+
+    /* vertical is done in parallel */
+    /* center.x + (c*dx + (-s*dy)) */
+    /* center.y + (s*dx + (c*dy)) */
+    /* ret = [x0, x1, x2, x3, y0, y1, y2, y3] */
+    __m256 _ret_xy = _mm256_fmadd_ps(
+        _nsc, _dy, 
+        _mm256_fmadd_ps(_cs, _dx, 
+            _center
+        )
+    );
+
+    union {
+        __m256 vec;
+        float f32[8];
+    } cvt = { .vec = _ret_xy };
+    for (int i = 0; i < 4; i++)
+    {
+        p->points[i].x = cvt.f32[i];
+        p->points[i].y = cvt.f32[i + 4];
+    }
+
+#undef SEL2
+#undef SEL4
+#undef GETBIT
+
+
+
+#else
     for (int i = 0; i < 4; i++)
     {
         p->points[i] = vec_rot(p->points[i], center, c, s);
     }
+#endif /* CAI_AVX2 */
 }
 
 
@@ -182,12 +252,12 @@ void Polygon_RectFrom(Polygon_t *p, Vector2 center, flt_t w, flt_t h, flt_t angl
 
 static Reading_t *segment_intersect(Reading_t *reading, Vector2 A, Vector2 B, Vector2 C, Vector2 D)
 {
-    flt_t t_top = (D.x-C.x)*(A.y-C.y)-(D.y-C.y)*(A.x-C.x);
-    flt_t u_top = (C.y-A.y)*(A.x-B.x)-(C.x-A.x)*(A.y-B.y);
     flt_t bottom = (D.y-C.y)*(B.x-A.x)-(D.x-C.x)*(B.y-A.y);
 
     if (bottom)
     {
+        flt_t t_top = (D.x - C.x) * (A.y - C.y) - (D.y - C.y) * (A.x - C.x);
+        flt_t u_top = (C.y - A.y) * (A.x - B.x) - (C.x - A.x) * (A.y - B.y);
         flt_t t = t_top / bottom;
         flt_t u = u_top / bottom;
         if ((0 <= t && t <= 1) && (0 <= u && u <= 1))
