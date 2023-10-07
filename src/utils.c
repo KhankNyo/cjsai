@@ -8,7 +8,10 @@
 
 
 
-
+const u32bytes_t g_EndianOrder = 
+{
+    .bytes = {0, 1, 2, 3}
+};
 
 
 

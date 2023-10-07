@@ -10,6 +10,25 @@
 
 
 
+
+enum 
+{
+    ENDIAN_BIG = 0x03020100,
+    ENDIAN_LITTLE = 0x00010203,
+    ENDIAN_PDP = 0x01000203,
+    ENDIAN_HONEYWELL = 0x020300001,
+};
+
+typedef union u32bytes_t
+{
+    uint8_t bytes[4];
+    uint32_t val;
+} u32bytes_t;
+extern const u32bytes_t g_EndianOrder;
+#define HOST_ENDIAN() (g_EndianOrder.val)
+
+
+
 #define LERP(fstart, fend, fpercentage) f32lerp(fstart, fend, fpercentage)
 #define ZEROALL(type) (type){0}
 #define DEG_TO_RAD(deg) ((deg) * (PI / 180.0f))

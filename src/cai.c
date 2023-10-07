@@ -39,6 +39,7 @@ static int s_car_count = STATIC_ARRSIZE(s_cars);
 
 static Car_t *s_bestcar = NULL;
 static NeuralNet_t *s_bestbrain = NULL;
+static char s_savefile_name[DEF_SAVE_FILE_NAME_LEN] = DEF_SAVE_FILE;
 static int s_kill_threshold = DEF_KILL_THRESHOLD;
 
 
@@ -200,18 +201,24 @@ void CAI_Run(void)
         Road_Recenter(&s_road, s_width, s_height);
     }
 
-    flt_t x = s_width * .8;
-    GuiSlider(box(x, s_height*.75, 5, DEF_VALUEBOX_HEIGHT), 
+    flt_t x = s_width * .8, y = s_height*.75;
+    GuiSlider(box(x, y, 5, DEF_VALUEBOX_HEIGHT), 
         "similar", "different", &coefficient, 0, 1
     );
-    value_box("", x, s_height*0.78, coefficient * 100);
+
+    y += DEF_VALUEBOX_HEIGHT;
+    value_box("", x, y, coefficient * 100);
+
+    y += DEF_VALUEBOX_HEIGHT;
     if (GuiButton(
-        box(x, s_height*.81, (flt_t)sizeof("Mutate") / 2, DEF_VALUEBOX_HEIGHT), 
+        box(x, y, (flt_t)sizeof("Mutate") / 2, DEF_VALUEBOX_HEIGHT), 
         "Mutate"))
     {
         reset(coefficient);
     }
-    if (GuiButton(defbox(x, s_height*.84), "Save"))
+
+    y += DEF_VALUEBOX_HEIGHT;
+    if (GuiButton(defbox(x, y), "Save"))
     {
         save_bestcar();
     }
@@ -516,6 +523,7 @@ static void reset(double coefficient)
 static void save_bestcar(void)
 {
     s_bestbrain = &s_bestcar->brain;
+    Saver_SaveFile(s_savefile_name, *s_bestbrain);
 }
 
 

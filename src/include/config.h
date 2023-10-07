@@ -8,6 +8,8 @@
 
 #define DEF_FONT_FILE "resources/font/cascadia.ttf"
 #define DEF_FONT_SIZE 20
+#define DEF_SAVE_FILE "neuralnetwork.data"
+#define DEF_SAVE_FILE_NAME_LEN (256)
 
 #define DEF_WIN_WIDTH 1080
 #define DEF_WIN_HEIGHT 720

@@ -11,11 +11,10 @@
 typedef struct Level_t
 {
     fltarr_t inputs;
-    fltarr_t biases;
     bitarr_t outputs;
-
     usize_t output_count;
 
+    fltarr_t biases;
     fltarr_t* weights;
     usize_t weight_count;
 } Level_t;

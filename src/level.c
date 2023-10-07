@@ -34,6 +34,7 @@ Level_t Level_Init(usize_t input_count, usize_t output_count)
         .weights = MEM_ALLOC_ARRAY(
             input_count, sizeof(level.weights[0])
         ),
+        .weight_count = input_count,
     };
 
     fltarr_Reserve(&level.inputs, input_count);
