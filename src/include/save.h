@@ -5,9 +5,15 @@
 
 #include "network.h"
 
-/* returns true if file already exist, 
- * if file does not exist, a new file will be created */
-bool Saver_SaveFile(const char *filename, const NeuralNet_t nn);
+
+typedef enum SaverStatus_t
+{
+    SAVE_FAILED = 0,
+    SAVE_NEW_FILE,
+    SAVE_OLD_FILE,
+} SaverStatus_t;
+
+SaverStatus_t Saver_SaveFile(const char *filename, const NeuralNet_t nn);
 NeuralNet_t Saver_LoadSave(const char *filename);
 
 
