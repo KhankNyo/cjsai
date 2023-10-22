@@ -9,12 +9,14 @@
 typedef enum SaverStatus_t
 {
     SAVE_FAILED = 0,
+
     SAVE_NEW_FILE,
     SAVE_OLD_FILE,
 } SaverStatus_t;
 
 SaverStatus_t Saver_SaveFile(const char *filename, const NeuralNet_t nn);
-NeuralNet_t Saver_LoadSave(const char *filename);
+/* returns true if able to load save file, false otherwise */
+bool Saver_LoadSave(NeuralNet_t *nn, const char *filename);
 
 
 

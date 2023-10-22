@@ -39,7 +39,7 @@ typedef struct NeuralNet_t
  *      level 0: in: 2, out: 1
  *      level 1: in: 1, out: 3
  */
-NeuralNet_t NeuralNet_Init(const NNArch_t arch);
+NeuralNet_t NeuralNet_Init(const NNArch_t arch, bool initialize);
 void NeuralNet_Deinit(NeuralNet_t *nn);
 void NeuralNet_Copy(NeuralNet_t *nn, const NeuralNet_t src);
 

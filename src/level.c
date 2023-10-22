@@ -15,7 +15,7 @@ static void randomize(Level_t *level);
 
 
 
-Level_t Level_Init(usize_t input_count, usize_t output_count)
+Level_t Level_Init(usize_t input_count, usize_t output_count, bool initialize)
 {
     CAI_ASSERT(input_count < BITARR_COUNT, 
         "a level's input of a level must be < %d\n", BITARR_COUNT
@@ -48,7 +48,8 @@ Level_t Level_Init(usize_t input_count, usize_t output_count)
         level.weights[i].count = output_count;
     }
 
-    randomize(&level);
+    if (initialize)
+        randomize(&level);
     return level;
 }
 
@@ -74,7 +75,7 @@ Level_t Level_Copy(Level_t *dst, const Level_t src)
     Level_t l;
     if (NULL == dst)
     {
-        l = Level_Init(src.inputs.count, src.output_count);
+        l = Level_Init(src.inputs.count, src.output_count, true);
         dst = &l;
     }
 

@@ -12,9 +12,9 @@ DEPS=$(DEPS_PATH)/libraylib.a $(DEPS_PATH)/raygui.o
 LIBS=$(DEPS) -lopengl32 -lgdi32 -lwinmm
 
 CC=gcc
-CCF=-Ofast -flto -mfma -mavx2 -DCAI_AVX2 -std=c99 
+CCF=-Ofast -g -mfma -mavx2 -DCAI_AVX2 -std=c99 
 CCF+=-I$(RAYLIB_SRC_PATH) -I$(RAYGUI_SRC_PATH) -Wall -Wpedantic -Wextra 
-LDF=-flto -L$(DEPS_PATH)
+LDF=-g -L$(DEPS_PATH)
 
 
 EXEC_FMT=

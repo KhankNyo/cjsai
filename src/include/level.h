@@ -20,7 +20,7 @@ typedef struct Level_t
 } Level_t;
 
 
-Level_t Level_Init(usize_t input_count, usize_t output_count);
+Level_t Level_Init(usize_t input_count, usize_t output_count, bool initialize);
 void Level_Deinit(Level_t *level);
 Level_t Level_Copy(Level_t *dst, const Level_t src);
 

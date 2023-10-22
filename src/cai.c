@@ -86,6 +86,7 @@ static void draw_cars(Color color);
 
 static void reset(double coefficient);
 static void save_bestcar(void);
+static void load_bestcar(void);
 
 static int random_lane_index(void);
 static double random_lane(int *outlane);
@@ -206,10 +207,10 @@ void CAI_Run(void)
         "similar", "different", &coefficient, 0, 1
     );
 
-    y += DEF_VALUEBOX_HEIGHT;
+    y += DEF_VALUEBOX_HEIGHT * s_font_size;
     value_box("", x, y, coefficient * 100);
 
-    y += DEF_VALUEBOX_HEIGHT;
+    y += DEF_VALUEBOX_HEIGHT * s_font_size;
     if (GuiButton(
         box(x, y, (flt_t)sizeof("Mutate") / 2, DEF_VALUEBOX_HEIGHT), 
         "Mutate"))
@@ -217,10 +218,16 @@ void CAI_Run(void)
         reset(coefficient);
     }
 
-    y += DEF_VALUEBOX_HEIGHT;
+    y += DEF_VALUEBOX_HEIGHT * s_font_size;
     if (GuiButton(defbox(x, y), "Save"))
     {
         save_bestcar();
+    }
+
+    y += DEF_VALUEBOX_HEIGHT * s_font_size;
+    if (GuiButton(defbox(x, y), "Load"))
+    {
+        load_bestcar();
     }
 
 
@@ -524,6 +531,11 @@ static void save_bestcar(void)
 {
     s_bestbrain = &s_bestcar->brain;
     Saver_SaveFile(s_savefile_name, *s_bestbrain);
+}
+
+static void load_bestcar(void)
+{
+    Saver_LoadSave(s_bestbrain, s_savefile_name);
 }
 
 

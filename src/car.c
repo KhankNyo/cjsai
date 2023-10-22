@@ -42,7 +42,7 @@ Car_t Car_Init(Car_t *car, Rectangle shape, const CarData_t data)
 
     if (data.type == CAR_AI && data.arch != NULL)
     {
-        car->brain = NeuralNet_Init(*data.arch);
+        car->brain = NeuralNet_Init(*data.arch, true);
     }
     return *car;
 }

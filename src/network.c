@@ -54,7 +54,7 @@ bool NNArch_Change(NNArch_t *arch, usize_t count, usize_t *levels)
 
 
 
-NeuralNet_t NeuralNet_Init(const NNArch_t arch)
+NeuralNet_t NeuralNet_Init(const NNArch_t arch, bool initialize)
 {
     CAI_ASSERT(arch.count > 1, "There must be at least 2 neurons in a neural network\n");
 
@@ -64,7 +64,7 @@ NeuralNet_t NeuralNet_Init(const NNArch_t arch)
     };
     for (usize_t i = 0; i < nn.count; i++)
     {
-        nn.levels[i] = Level_Init(arch.levels[i], arch.levels[i + 1]);
+        nn.levels[i] = Level_Init(arch.levels[i], arch.levels[i + 1], initialize);
     }
     return nn;
 }
