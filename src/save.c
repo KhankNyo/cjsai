@@ -24,10 +24,14 @@
 #endif /* */
 
 
+static const char s_magic[8] = "ai.data";
+
+
 
 
 typedef struct FileHeader_t
 {
+    uint8_t magic[8];
     uint64_t level_count;
     uint64_t offsets[];
     /* levels right after */
@@ -127,7 +131,7 @@ bool Saver_LoadSave(NeuralNet_t *nn, const char *filename)
         const HeaderInterp_t ptr = data.ptr;
 
         /* get input and output count of a level */
-        uint64_t icount, ocount;
+        uint32_t icount, ocount;
         memcpy(&icount, &ptr.u8[offset], sizeof(icount));
         memcpy(&ocount, &ptr.u8[offset + sizeof(icount)], sizeof(ocount));
 
@@ -143,7 +147,7 @@ bool Saver_LoadSave(NeuralNet_t *nn, const char *filename)
 
 
     /* copy values from the save file */
-    for (uint64_t i = 0; i < level_count; i++)
+    for (uint64_t i = 0; i < level_count - 1; i++)
     {
         uint64_t offset = data.ptr.header->offsets[i];
         const LevelHeader_t *header = (LevelHeader_t*)&data.ptr.u8[offset];
@@ -175,11 +179,16 @@ static RawData_t data_from_nn(const NeuralNet_t nn)
 {
     RawData_t data = { 0 };
     const uint64_t total_size = sizeof(FileHeader_t) 
-        + nn.count * sizeof(data.ptr.header->offsets[0]);
+        + (nn.count + 1) * sizeof(data.ptr.header->offsets[0]);
 
     /* file header first */
     data.ptr.u8 = mem_alloc(total_size);
-    data.ptr.header->level_count = nn.count;
+    data.ptr.header->level_count = nn.count + 1;
+
+
+    /* magic constant */
+    memcpy(&data.ptr.header->magic, s_magic, sizeof s_magic);
+    data.nbytes = total_size;
 
 
     /* contents */
@@ -187,6 +196,7 @@ static RawData_t data_from_nn(const NeuralNet_t nn)
     {
         /* write the level's offset to the offset table */
         data.ptr.header->offsets[i] = data.nbytes;
+
         /* write the level's data */
         data_write_level(&data, nn.levels[i]);
     }
@@ -248,19 +258,23 @@ static SaverStatus_t save_to_file(const RawData_t data, const char *filename)
 
 static void data_write_fltarr(RawData_t *data, const fltarr_t array)
 {
-    const uint32_t arrcount = array.count;
+    const uint64_t arrcount = array.count;
     const uint64_t newsize = data->nbytes
         + arrcount * sizeof(array.at[0]) 
         + sizeof arrcount;
     if (newsize > data->capacity)
     {
-        data->capacity = MEM_GROW_CAPACITY(data->capacity);
+        data->capacity = MEM_GROW_CAPACITY(newsize);
         data->ptr.u8 = MEM_REALLOC_ARRAY(data->ptr.u8, data->capacity, sizeof(data->ptr.u8[0]));
     }
 
+    /* copy the array count */
     uint8_t *curr = &data->ptr.u8[data->nbytes];
     memcpy(curr, &arrcount, sizeof arrcount);
-    memcpy(curr + arrcount, array.at, array.count * sizeof(array.at[0]));
+
+    /* now skip over and copy array data */
+    curr += sizeof arrcount;
+    memcpy(curr, array.at, array.count * sizeof(array.at[0]));
     data->nbytes = newsize;
 }
 
@@ -277,7 +291,7 @@ static void data_write_level(RawData_t *data, const Level_t level)
     const uint64_t newsize = data->nbytes + sizeof(header);
     if (newsize > data->capacity)
     {
-        data->capacity = MEM_GROW_CAPACITY(data->capacity);
+        data->capacity = MEM_GROW_CAPACITY(newsize);
         data->ptr.u8 = MEM_REALLOC_ARRAY(data->ptr.u8, data->capacity, sizeof(data->ptr.u8[0]));
     }
 
@@ -310,7 +324,7 @@ static void data_read_level(Level_t *level, const LevelHeader_t *header)
     union {
         fltarrHeader_t *fltarr;    
         uint8_t *u8;
-    } ptr = {.u8 = (uint8_t*)(header + 1)};
+    } ptr = {.u8 = (uint8_t*)header + sizeof(*header)};
 
     /* copy elems */
     ptr.u8 += data_read_fltarr(&level->biases, ptr.fltarr);
