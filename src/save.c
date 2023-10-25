@@ -179,7 +179,7 @@ static RawData_t data_from_nn(const NeuralNet_t nn)
 {
     RawData_t data = { 0 };
     const uint64_t total_size = sizeof(FileHeader_t) 
-        + (nn.count + 1) * sizeof(data.ptr.header->offsets[0]);
+        + (nn.count) * sizeof(data.ptr.header->offsets[0]);
 
     /* file header first */
     data.ptr.u8 = mem_alloc(total_size);
