@@ -21,14 +21,114 @@
 #  define PACKED __attribute__((packed))
 #else
 #  define PACKED
-#endif /* */
+#endif
 
 
 static const char s_magic[8] = "ai.data";
 
+#define read_file fread
+
+
+/* 
+ * file format:
+ *  u8[8] magic
+ *  u32 level_count
+ *  u32 lvl0_o
+ *  u32 lvl1_o/lvl2_i
+ *  u32 lvl2_o/lvl3_o
+ *  ...
+ *  levels...
+ *
+ * level:
+ *  fltarr bias
+ *  u32 weight_count
+ *  fltarr weights0
+ *  fltarr weights1
+ *  fltarr weights2
+ *  ...
+ *
+ * fltarr:
+ *  u32 count
+ *  f32 f0
+ *  f32 f1
+ *  f32 f2
+ *  ...
+ */
+
+
+static bool load_from_file(NeuralNet_t *out_nn, FILE *f);
 
 
 
+
+
+SaverStatus_t Saver_SaveFile(const char *filename, NeuralNet_t nn)
+{
+    SaverStatus_t status = SAVE_NEW_FILE;
+    if (access(filename, F_OK) == 0)
+        status = SAVE_OLD_FILE;
+
+    FILE *f = fopen(filename, "wb");
+    if (NULL == f)
+        return SAVE_FAILED;
+
+
+
+    fclose(f);
+    return status;
+}
+
+bool Saver_LoadSave(NeuralNet_t *out_nn, const char *filename)
+{
+    FILE *f = fopen(filename, "rb");
+    if (NULL == f)
+        return false;
+
+    bool status = load_from_file(out_nn, f);
+
+    fclose(f);
+    return status;
+}
+
+
+
+
+static bool load_from_file(NeuralNet_t *out_nn, FILE *f)
+{
+    char magic[8];
+    read_file(&magic, 1, sizeof magic, f);
+    if (0 != memcmp(magic, s_magic, sizeof magic))
+    {
+        return false;
+    }
+
+    /* TODO: endianness */
+    /* read level count */
+    uint32_t level_count;
+    read_file(&level_count, sizeof level_count, 1, f);
+
+    /* read level */
+    usize_t *lvlbuf = MEM_ALLOCA_ARRAY(level_count, sizeof(*lvlbuf));
+    NNArch_t arch = {
+        .count = level_count,
+        .capacity = level_count,
+        .levels = lvlbuf,
+    };
+    for (uint32_t i = 0; i < level_count; i++)
+    {
+        fread(lvlbuf, sizeof(uint32_t), level_count, f);
+    }
+
+    /* init neural net */
+    *out_nn = NeuralNet_Init(arch, false);
+    for (uint32_t i = 0; i < out_nn->count - 1; i++)
+    {
+        out_nn->levels[i] = Level_Init(arch.levels[i], arch.levels[i + 1], false);
+    }
+}
+
+
+#if 0
 typedef struct FileHeader_t
 {
     uint8_t magic[8];
@@ -346,4 +446,8 @@ static uint64_t data_read_fltarr(fltarr_t *arr, const fltarrHeader_t *header)
     memcpy(arr->at, header->elems, size * sizeof(arr->at[0]));
     return header->count * sizeof(arr->at[0]) + sizeof(*header);
 }
+#endif
+
+
+
 
